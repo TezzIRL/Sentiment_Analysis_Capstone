@@ -32,9 +32,14 @@
     <Compile Include="ESA_Modules\ESA_SentimentProcessor.py" />
     <Compile Include="ESA_Modules\ESA_Visualiser.py" />
     <Compile Include="ESA_Modules\__init__.py" />
+    <Compile Include="pages\export.py" />
+    <Compile Include="pages\home.py" />
+    <Compile Include="pages\upload.py" />
+    <Compile Include="pages\visualise.py" />
   </ItemGroup>
   <ItemGroup>
     <Folder Include="ESA_Modules\" />
+    <Folder Include="pages\" />
   </ItemGroup>
   <ItemGroup>
     <Interpreter Include="env_sentiment_analysis\">
