@@ -25,7 +25,6 @@
     <Compile Include="app.py" />
     <Compile Include="ESA_Modules\ESA_DatasetBuilder.py" />
     <Compile Include="ESA_Modules\ESA_Exporter.py" />
-    <Compile Include="ESA_Modules\ESA_Interface.py" />
     <Compile Include="ESA_Modules\ESA_PreprocessedEmailAccess.py" />
     <Compile Include="ESA_Modules\ESA_ProcessedEmailAccess.py" />
     <Compile Include="ESA_Modules\ESA_RawEmailAccess.py" />
