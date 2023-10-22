@@ -18,11 +18,11 @@ import base64
 import datetime
 import io
 
-from ESA_Modules import PreprocessEmail
+from ESA_Modules import Preprocessor
 
 import pandas as pd
 
-email_df = pd.DataFrame()
+email_preprocessor = Preprocessor()
 
 register_page(__name__, top_nav=True, path="/upload")
 
@@ -63,15 +63,7 @@ def parse_contents(contents, filename, date):
         # elif 'xls' in filename:
         #     df = pd.read_excel(io.BytesIO(decoded))
         unprocessed_email = decoded.decode("utf-8")
-        processed_email = PreprocessEmail(unprocessed_email)
-        print(processed_email)
-        data = pd.DataFrame([{'Subject':processed_email[0]},
-                             {'From':processed_email[1]},
-                             {'To':processed_email[2]},
-                             {'Date':processed_email[3]},
-                             {'Message-ID':processed_email[4]},
-                             {'Content':processed_email[5]}])
-        email_df = pd.concat(email_df, data)
+        email_preprocessor.CleanEmails(unprocessed_email)
 
     except Exception as e:
         print(e)
@@ -82,8 +74,8 @@ def parse_contents(contents, filename, date):
             html.H5(filename),
             html.H6(datetime.datetime.fromtimestamp(date)),
             dash_table.DataTable(
-                data = email_df.to_dict('records'),
-                columns = [{'name': i, 'id': i} for i in email_df.columns],
+                data = email_preprocessor.get_dataframe().to_dict('records'),
+                columns = [{'name': i, 'id': i} for i in email_preprocessor.get_dataframe().columns],
                 style_data = {
                     'whiteSpace': 'normal',
                     'height': 'auto',
@@ -112,4 +104,4 @@ def update_output(list_of_contents, list_of_names, list_of_dates):
             parse_contents(c, n, d)
             for c, n, d in zip(list_of_contents, list_of_names, list_of_dates)
         ]
-        return children
+        return children[-1]
