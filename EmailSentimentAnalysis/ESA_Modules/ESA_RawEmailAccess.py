@@ -18,10 +18,9 @@ nltk.download('wordnet')
 
 class Preprocessor:
     def __init__(self):
-        self.__emails = [['Subject', 'From', 'To', 'Date', 'Message-ID', 'Content', 'No Punctuation', 'Lowered', 'Tokenized', 'No-Stop-Words']]
+        self.__emails = [['Subject', 'From', 'To', 'Date', 'Message-ID', 'Content', 'No Punctuation', 'Lowered', 'Tokenized', 'No-Stop-Words', 'Lemmatized']]
         self.__lemmatizer = WordNetLemmatizer()
         self.__stop_words = set(stopwords.words('english'))
-        print(self.__stop_words)
         self.__spellChecker = SpellChecker()
                 
 
@@ -114,6 +113,10 @@ class Preprocessor:
         print(corrected_words)
         return corrected_words
 
+    def __Lemmatization(self, text):
+        lemm_text = [self.__lemmatizer.lemmatize(word) for word in text]
+        return lemm_text
+
     def CleanEmails(self, raw_email_content):
         preprocessed_email_content = self.__extract_email_body(raw_email_content)
         preprocessed_email_content = self.__remove_urls(preprocessed_email_content)
@@ -123,10 +126,11 @@ class Preprocessor:
         tokenized_content = word_tokenize(lower_case_content)
         spell_checked_content = self.__correct_spelling(tokenized_content)
         stopword_free_content = self.__remove_stopwords(spell_checked_content)
+        lemmatized_content = self.__Lemmatization(stopword_free_content)
 
         # email content
         if preprocessed_email_content and not preprocessed_email_content.isspace():
             email = Parser().parsestr(raw_email_content)
-            self.__emails.append([email.get("subject", "N/A"), email.get("from", "N/A"), email.get("to", "N/A"), email.get("date", "N/A"), email.get("message-id", "N/A"), preprocessed_email_content, cleaned_email_content, lower_case_content, tokenized_content,stopword_free_content])
-            print(stopword_free_content)
+            self.__emails.append([email.get("subject", "N/A"), email.get("from", "N/A"), email.get("to", "N/A"), email.get("date", "N/A"), email.get("message-id", "N/A"), preprocessed_email_content, cleaned_email_content, lower_case_content, tokenized_content,stopword_free_content, lemmatized_content])
+            print(lemmatized_content)
 
