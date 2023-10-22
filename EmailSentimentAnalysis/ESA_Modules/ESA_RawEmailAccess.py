@@ -5,11 +5,25 @@ import csv
 import os
 import re
 import pandas as pd
+from spellchecker import SpellChecker
+import nltk
+from nltk.corpus import stopwords
+from nltk.tokenize import word_tokenize
+from nltk.stem import WordNetLemmatizer
+import string
 
+nltk.download('stopwords')
+nltk.download('punkt')
+nltk.download('wordnet')
 
 class Preprocessor:
     def __init__(self):
-        self.__emails = [['Subject', 'From', 'To', 'Date', 'Message-ID', 'Content']]
+        self.__emails = [['Subject', 'From', 'To', 'Date', 'Message-ID', 'Content', 'No Punctuation', 'Lowered', 'Tokenized', 'No-Stop-Words']]
+        self.__lemmatizer = WordNetLemmatizer()
+        self.__stop_words = set(stopwords.words('english'))
+        print(self.__stop_words)
+        self.__spellChecker = SpellChecker()
+                
 
     def get_dataframe(self):
         email_df = pd.DataFrame(self.__emails)
@@ -70,18 +84,49 @@ class Preprocessor:
         url_pattern = re.compile(r"https?://\S+|www\.\S+")
         return url_pattern.sub("", text)
 
-
     def __remove_email_addresses(self, text):
         email_pattern = re.compile(r"\S+@\S+")
         return email_pattern.sub("", text)
+
+    def __remove_punctuation(self, text):
+        punctuation_free = "".join([character for character in text if character not in string.punctuation])
+        return punctuation_free
+    
+    def __tokenize(self, text):
+        tokens = re.split(r'(?u)(?![_/&@.])\W+|(?<!Mr|Dr)\.(?!\w)\W*', text)
+        return tokens
+
+    def __remove_stopwords(self, tokens):
+        removed_stopwords = []
+        for token in tokens:
+            if token not in self.__stop_words:
+                removed_stopwords.append(token)
+        return removed_stopwords
+
+    def __correct_spelling(self, text):
+        corrected_words = []
+        for word in text:
+            corrected = self.__spellChecker.correction(word)
+            if corrected is not None:
+                corrected_words.append(corrected)
+            else:
+                corrected_words.append(word)
+        print(corrected_words)
+        return corrected_words
 
     def CleanEmails(self, raw_email_content):
         preprocessed_email_content = self.__extract_email_body(raw_email_content)
         preprocessed_email_content = self.__remove_urls(preprocessed_email_content)
         preprocessed_email_content = self.__remove_email_addresses(preprocessed_email_content)
+        cleaned_email_content = self.__remove_punctuation(preprocessed_email_content)
+        lower_case_content = cleaned_email_content.lower()
+        tokenized_content = word_tokenize(lower_case_content)
+        spell_checked_content = self.__correct_spelling(tokenized_content)
+        stopword_free_content = self.__remove_stopwords(spell_checked_content)
 
         # email content
         if preprocessed_email_content and not preprocessed_email_content.isspace():
             email = Parser().parsestr(raw_email_content)
-            self.__emails.append([email.get("subject", "N/A"), email.get("from", "N/A"), email.get("to", "N/A"), email.get("date", "N/A"), email.get("message-id", "N/A"), preprocessed_email_content])
+            self.__emails.append([email.get("subject", "N/A"), email.get("from", "N/A"), email.get("to", "N/A"), email.get("date", "N/A"), email.get("message-id", "N/A"), preprocessed_email_content, cleaned_email_content, lower_case_content, tokenized_content,stopword_free_content])
+            print(stopword_free_content)
 
