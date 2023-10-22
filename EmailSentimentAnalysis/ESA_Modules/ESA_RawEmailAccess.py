@@ -110,7 +110,6 @@ class Preprocessor:
                 corrected_words.append(corrected)
             else:
                 corrected_words.append(word)
-        print(corrected_words)
         return corrected_words
 
     def __Lemmatization(self, text):
@@ -132,5 +131,4 @@ class Preprocessor:
         if preprocessed_email_content and not preprocessed_email_content.isspace():
             email = Parser().parsestr(raw_email_content)
             self.__emails.append([email.get("subject", "N/A"), email.get("from", "N/A"), email.get("to", "N/A"), email.get("date", "N/A"), email.get("message-id", "N/A"), preprocessed_email_content, cleaned_email_content, lower_case_content, tokenized_content,stopword_free_content, lemmatized_content])
-            print(lemmatized_content)
 
