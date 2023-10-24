@@ -84,6 +84,12 @@ app.layout = dbc.Tabs(
                             # Allow multiple files to be uploaded
                             multiple=True,
                         ),
+                        html.Div(
+                            [
+                                html.Button("Download Cleaned Data", id="cleaned_data_download_btn_csv"),
+                                dcc.Download(id="download-cleaned-data-csv"),
+                            ]
+                        ),
                         html.Div(id="output-data-upload"),
                     ],
                     className="tab-content",
@@ -392,6 +398,13 @@ def update_output(list_of_contents, list_of_names, list_of_dates):
         ]
         return children[-1]
 
+@callback(
+    Output("download-cleaned-data-csv", "data"),
+    Input("cleaned_data_download_btn_csv", "n_clicks"),
+    prevent_initial_call = True
+)
+def cleaned_data_to_file(n_clicks):
+    return dcc.send_data_frame(email_preprocessor.get_dataframe().to_csv, "cleaned_emails.csv")
 
 server = app.server
 
