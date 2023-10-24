@@ -30,6 +30,7 @@ import datetime
 webbrowser.get().open("http://127.0.0.1:8050")
 
 email_preprocessor = Preprocessor()
+cleaned_emails = pd.DataFrame()
 
 # NAVBAR = create_navbar()
 
@@ -344,6 +345,7 @@ def parse_contents(contents, filename, date):
         #     df = pd.read_excel(io.BytesIO(decoded))
         unprocessed_email = decoded.decode("utf-8")
         email_preprocessor.Simple_Clean(unprocessed_email)
+        cleaned_emails = email_preprocessor.get_dataframe()
 
     except Exception as e:
         print(e)
@@ -354,10 +356,11 @@ def parse_contents(contents, filename, date):
             html.H5(filename),
             html.H6(datetime.datetime.fromtimestamp(date)),
             dash_table.DataTable(
-                data=email_preprocessor.get_dataframe().to_dict("records"),
+                #data=email_preprocessor.get_dataframe().to_dict("records"),
+                data=cleaned_emails.to_dict("records"),
                 columns=[
                     {"name": i, "id": i}
-                    for i in email_preprocessor.get_dataframe().columns
+                    for i in cleaned_emails.columns
                 ],
                 style_data={
                     "whiteSpace": "normal",

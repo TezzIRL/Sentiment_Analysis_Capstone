@@ -2,6 +2,7 @@
 
 from email.parser import Parser
 import re
+import time
 import pandas as pd
 from spellchecker import SpellChecker
 import nltk
@@ -9,6 +10,8 @@ from nltk.corpus import stopwords
 from nltk.tokenize import word_tokenize
 from nltk.stem import WordNetLemmatizer
 import string
+import datetime
+from dateutil import parser
 
 nltk.download('stopwords')
 nltk.download('punkt')
@@ -16,7 +19,7 @@ nltk.download('wordnet')
 
 class Preprocessor:
     def __init__(self):
-        self.__emails = [[]]
+        self.__emails = [['Subject', 'From', 'To', 'Year', 'Month', 'Day', 'Time', 'Message-ID', 'Content']]
         self.__lemmatizer = WordNetLemmatizer()
         self.__stop_words = set(stopwords.words('english'))
         self.__spellChecker = SpellChecker()
@@ -132,14 +135,20 @@ class Preprocessor:
             self.__emails.append([email.get("subject", "N/A"), email.get("from", "N/A"), email.get("to", "N/A"), email.get("date", "N/A"), email.get("message-id", "N/A"), preprocessed_email_content, cleaned_email_content, lower_case_content, tokenized_content,stopword_free_content, lemmatized_content])
 
     def Simple_Clean(self, raw_email_content):
-        self.__emails = [['Subject', 'From', 'To', 'Date', 'Message-ID', 'Content']]
         preprocessed_email_content = self.__extract_email_body(raw_email_content)
         preprocessed_email_content = self.__remove_urls(preprocessed_email_content)
         preprocessed_email_content = self.__remove_email_addresses(preprocessed_email_content)
         cleaned_email_content = self.__remove_punctuation(preprocessed_email_content)
         lower_case_content = cleaned_email_content.lower()
         
+        email = Parser().parsestr(raw_email_content)
+        email_datetime = parser.parse(email.get("date", "N/A"))
+        email_year = email_datetime.strftime("%Y")
+        email_month = email_datetime.strftime("%m")
+        email_day = email_datetime.strftime("%d")
+        email_time = email_datetime.strftime("%H:%M")
+
         # email content
         if preprocessed_email_content and not preprocessed_email_content.isspace():
             email = Parser().parsestr(raw_email_content)
-            self.__emails.append([email.get("subject", "N/A"), email.get("from", "N/A"), email.get("to", "N/A"), email.get("date", "N/A"), email.get("message-id", "N/A"), lower_case_content])
+            self.__emails.append([email.get("subject", "N/A"), email.get("from", "N/A"), email.get("to", "N/A"), email_year, email_month, email_day, email_time, email.get("message-id", "N/A"), lower_case_content])
