@@ -89,6 +89,7 @@ class Preprocessor:
         return email_pattern.sub("", text)
 
     def __remove_punctuation(self, text):
+        text = [x.replace('-', ' ') for x in text]
         punctuation_free = "".join([character for character in text if character not in string.punctuation])
         return punctuation_free
     
