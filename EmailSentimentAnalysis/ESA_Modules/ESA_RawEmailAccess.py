@@ -16,7 +16,7 @@ nltk.download('wordnet')
 
 class Preprocessor:
     def __init__(self):
-        self.__emails = [['Subject', 'From', 'To', 'Date', 'Message-ID', 'Content', 'No Punctuation', 'Lowered', 'Tokenized', 'No-Stop-Words', 'Lemmatized']]
+        self.__emails = [[]]
         self.__lemmatizer = WordNetLemmatizer()
         self.__stop_words = set(stopwords.words('english'))
         self.__spellChecker = SpellChecker()
@@ -115,6 +115,7 @@ class Preprocessor:
         return lemm_text
 
     def CleanEmails(self, raw_email_content):
+        self.__emails = [['Subject', 'From', 'To', 'Date', 'Message-ID', 'Content', 'No Punctuation', 'Lowered', 'Tokenized', 'No-Stop-Words', 'Lemmatized']]
         preprocessed_email_content = self.__extract_email_body(raw_email_content)
         preprocessed_email_content = self.__remove_urls(preprocessed_email_content)
         preprocessed_email_content = self.__remove_email_addresses(preprocessed_email_content)
@@ -130,3 +131,15 @@ class Preprocessor:
             email = Parser().parsestr(raw_email_content)
             self.__emails.append([email.get("subject", "N/A"), email.get("from", "N/A"), email.get("to", "N/A"), email.get("date", "N/A"), email.get("message-id", "N/A"), preprocessed_email_content, cleaned_email_content, lower_case_content, tokenized_content,stopword_free_content, lemmatized_content])
 
+    def Simple_Clean(self, raw_email_content):
+        self.__emails = [['Subject', 'From', 'To', 'Date', 'Message-ID', 'Content']]
+        preprocessed_email_content = self.__extract_email_body(raw_email_content)
+        preprocessed_email_content = self.__remove_urls(preprocessed_email_content)
+        preprocessed_email_content = self.__remove_email_addresses(preprocessed_email_content)
+        cleaned_email_content = self.__remove_punctuation(preprocessed_email_content)
+        lower_case_content = cleaned_email_content.lower()
+        
+        # email content
+        if preprocessed_email_content and not preprocessed_email_content.isspace():
+            email = Parser().parsestr(raw_email_content)
+            self.__emails.append([email.get("subject", "N/A"), email.get("from", "N/A"), email.get("to", "N/A"), email.get("date", "N/A"), email.get("message-id", "N/A"), lower_case_content])

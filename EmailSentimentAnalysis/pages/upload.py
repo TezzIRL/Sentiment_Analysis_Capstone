@@ -26,6 +26,7 @@ email_preprocessor = Preprocessor()
 
 register_page(__name__, top_nav=True, path="/upload")
 
+
 def layout():
     layout = html.Div(
         [
@@ -74,13 +75,16 @@ def parse_contents(contents, filename, date):
             html.H5(filename),
             html.H6(datetime.datetime.fromtimestamp(date)),
             dash_table.DataTable(
-                data = email_preprocessor.get_dataframe().to_dict('records'),
-                columns = [{'name': i, 'id': i} for i in email_preprocessor.get_dataframe().columns],
-                style_data = {
-                    'whiteSpace': 'normal',
-                    'height': 'auto',
+                data=email_preprocessor.get_dataframe().to_dict("records"),
+                columns=[
+                    {"name": i, "id": i}
+                    for i in email_preprocessor.get_dataframe().columns
+                ],
+                style_data={
+                    "whiteSpace": "normal",
+                    "height": "auto",
                 },
-                fill_width=False
+                fill_width=False,
             ),
             html.Hr(),
             html.Div("Raw Content"),
