@@ -141,8 +141,9 @@ class Preprocessor:
         preprocessed_email_content = self.__remove_email_addresses(preprocessed_email_content)
         cleaned_email_content = self.__remove_punctuation(preprocessed_email_content)
         lower_case_content = cleaned_email_content.lower()
-        stripped_content = lower_case_content.strip()
-        no_new_lines_content = stripped_content.replace('\n', ' ').replace('\r', '')
+        no_new_lines_content = lower_case_content.replace('\n', ' ').replace('\r', '')
+        stripped_content = no_new_lines_content.strip()
+        
 
         email = Parser().parsestr(raw_email_content)
         email_datetime = parser.parse(email.get("date", "N/A"))
@@ -154,4 +155,4 @@ class Preprocessor:
         # email content
         if preprocessed_email_content and not preprocessed_email_content.isspace():
             email = Parser().parsestr(raw_email_content)
-            self.__emails.append([email.get("subject", "N/A"), email.get("from", "N/A"), email.get("to", "N/A"), email_year, email_month, email_day, email_time, email.get("message-id", "N/A"), no_new_lines_content])
+            self.__emails.append([email.get("subject", "N/A"), email.get("from", "N/A"), email.get("to", "N/A"), email_year, email_month, email_day, email_time, email.get("message-id", "N/A"), stripped_content])

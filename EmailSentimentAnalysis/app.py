@@ -25,12 +25,14 @@ import base64
 import pandas as pd
 import plotly.express as px
 from ESA_Modules import Preprocessor
+from ESA_Modules import Sentiment_Classifier
 import datetime
 
 webbrowser.get().open("http://127.0.0.1:8050")
 
 email_preprocessor = Preprocessor()
 cleaned_emails = pd.DataFrame()
+classifier = Sentiment_Classifier()
 
 # NAVBAR = create_navbar()
 
@@ -86,7 +88,10 @@ app.layout = dbc.Tabs(
                         ),
                         html.Div(
                             [
-                                html.Button("Download Cleaned Data", id="cleaned_data_download_btn_csv"),
+                                html.Button(
+                                    "Download Cleaned Data",
+                                    id="cleaned_data_download_btn_csv",
+                                ),
                                 dcc.Download(id="download-cleaned-data-csv"),
                             ]
                         ),
@@ -147,37 +152,16 @@ app.layout = dbc.Tabs(
                             "Sentiment Classification",
                             style={"color": "#0080FF", "font-size": "36px"},
                         ),
-                        dcc.Upload(
-                            id="upload-sentiment-data",
-                            children=html.Div(
-                                ["Drag and Drop or ", html.A("Select Files")]
-                            ),
-                            style={
-                                "width": "100%",
-                                "height": "60px",
-                                "lineHeight": "60px",
-                                "borderWidth": "1px",
-                                "borderStyle": "dashed",
-                                "borderRadius": "5px",
-                                "textAlign": "center",
-                                "margin": "10px",
-                            },
+                        html.Button(
+                            "Display Non Classified",
+                            id="list-non-classified-button",
                         ),
-                        dcc.Download(id="download-sentiment-data"),
-                        dcc.Textarea(
-                            id="input-text",
-                            placeholder="Enter text for sentiment analysis...",
+                        html.Button(
+                            "Display Classified",
+                            id="list-classified-button",
                         ),
-                        html.Div(
-                            [
-                                html.Button(
-                                    "Analyze Sentiment",
-                                    id="analyze-button",
-                                    style={"margin-top": "10px"},
-                                ),
-                                html.Div(id="output-sentiment"),
-                            ]
-                        ),
+                        html.Div(id="output-sentiment"),
+                        html.Div(id="output-non-classified"),
                         # Add more content for this scenario
                     ],
                     className="tab-content",
@@ -261,82 +245,71 @@ app.layout = dbc.Tabs(
 )
 
 
-@callback(
-    Output("download-data", "data"),
-    Input("upload-data", "filename"),
-    Input("upload-data", "contents"),
-)
-def download_uploaded_data(filename, contents):
-    if filename is not None:
-        content_type, content_string = contents.split(",")
-        decoded = base64.b64decode(content_string)
-        return {"content": decoded, "filename": filename}
+# @app.callback(
+#     Output("download-data", "data"),
+#     Input("upload-data", "filename"),
+#     Input("upload-data", "contents"),
+# )
+# def download_uploaded_data(filename, contents):
+#     if filename is not None:
+#         content_type, content_string = contents.split(",")
+#         decoded = base64.b64decode(content_string)
+#         return {"content": decoded, "filename": filename}
 
 
-@callback(
-    Output("download-processed-data", "data"),
-    Input("upload-processed-data", "filename"),
-    Input("upload-processed-data", "contents"),
-)
-def download_uploaded_processed_data(filename, contents):
-    if filename is not None:
-        content_type, content_string = contents.split(",")
-        decoded = base64.b64decode(content_string)
-        return {"content": decoded, "filename": filename}
+# @app.callback(
+#     Output("download-processed-data", "data"),
+#     Input("upload-processed-data", "filename"),
+#     Input("upload-processed-data", "contents"),
+# )
+# def download_uploaded_processed_data(filename, contents):
+#     if filename is not None:
+#         content_type, content_string = contents.split(",")
+#         decoded = base64.b64decode(content_string)
+#         return {"content": decoded, "filename": filename}
 
 
-@callback(
-    Output("download-sentiment-data", "data"),
-    Input("upload-sentiment-data", "filename"),
-    Input("upload-sentiment-data", "contents"),
-)
-def download_uploaded_sentiment_data(filename, contents):
-    if filename is not None:
-        content_type, content_string = contents.split(",")
-        decoded = base64.b64decode(content_string)
-        return {"content": decoded, "filename": filename}
+# @app.callback(
+#     Output("download-sentiment-data", "data"),
+#     Input("upload-sentiment-data", "filename"),
+#     Input("upload-sentiment-data", "contents"),
+# )
+# def download_uploaded_sentiment_data(filename, contents):
+#     if filename is not None:
+#         content_type, content_string = contents.split(",")
+#         decoded = base64.b64decode(content_string)
+#         return {"content": decoded, "filename": filename}
 
 
-@callback(
-    Output("visualization-graph", "figure"),
-    Input("visualization-dropdown", "value"),
-    Input("year-dropdown", "value"),
-)
-def update_visualization(selected_option, selected_year):
-    # if selected_year == 'All Years':
-    #     filtered_df = df  # No filtering by year
-    # else:
-    #     filtered_df = df[df['Year'] == selected_year]
+# @app.callback(
+#     Output("visualization-graph", "figure"),
+#     Input("visualization-dropdown", "value"),
+#     Input("year-dropdown", "value"),
+# )
+# def update_visualization(selected_option, selected_year):
+#     # if selected_year == 'All Years':
+#     #     filtered_df = df  # No filtering by year
+#     # else:
+#     #     filtered_df = df[df['Year'] == selected_year]
 
-    if selected_option == "tree-map":
-        # Create a Tree Map for the selected year
-        # tree_map_fig = px.treemap(filtered_df, path=['Year', 'Label'], color='Label')
-        # return tree_map_fig
-        pass
+#     if selected_option == "tree-map":
+#         # Create a Tree Map for the selected year
+#         # tree_map_fig = px.treemap(filtered_df, path=['Year', 'Label'], color='Label')
+#         # return tree_map_fig
+#         pass
 
-    elif selected_option == "network-graph":
-        # Create a Network Graph (Add your code here)
-        return {}
-    elif selected_option == "time-series":
-        # Create a Time Series (Add your code here)
-        return {}
-    elif selected_option == "pie-chart":
-        # Create a Pie Chart (Add your code here)
-        return {}
-    elif selected_option == "word-cloud":
-        # Create a word cloud (Add your code here)
-        return {}
-
-
-@callback(
-    Output("output-sentiment", "children"),
-    Input("analyze-button", "n_clicks"),
-    State("input-text", "value"),
-)
-def analyze_sentiment(n_clicks, input_text):
-    # Perform sentiment analysis here and return the result
-    return "Sentiment: Positive"  # Replace with your analysis result
-
+#     elif selected_option == "network-graph":
+#         # Create a Network Graph (Add your code here)
+#         return {}
+#     elif selected_option == "time-series":
+#         # Create a Time Series (Add your code here)
+#         return {}
+#     elif selected_option == "pie-chart":
+#         # Create a Pie Chart (Add your code here)
+#         return {}
+#     elif selected_option == "word-cloud":
+#         # Create a word cloud (Add your code here)
+#         return {}
 
 # Parsing Content for Uploading Email Data - Not Good Code - CodeDebt - FIX!!!
 def parse_contents(contents, filename, date):
@@ -352,6 +325,8 @@ def parse_contents(contents, filename, date):
         unprocessed_email = decoded.decode("utf-8")
         email_preprocessor.Simple_Clean(unprocessed_email)
         cleaned_emails = email_preprocessor.get_dataframe()
+        
+        classifier.Load_Data_To_Process(cleaned_emails)
 
     except Exception as e:
         print(e)
@@ -362,12 +337,9 @@ def parse_contents(contents, filename, date):
             html.H5(filename),
             html.H6(datetime.datetime.fromtimestamp(date)),
             dash_table.DataTable(
-                #data=email_preprocessor.get_dataframe().to_dict("records"),
+                # data=email_preprocessor.get_dataframe().to_dict("records"),
                 data=cleaned_emails.to_dict("records"),
-                columns=[
-                    {"name": i, "id": i}
-                    for i in cleaned_emails.columns
-                ],
+                columns=[{"name": i, "id": i} for i in cleaned_emails.columns],
                 style_data={
                     "whiteSpace": "normal",
                     "height": "auto",
@@ -384,8 +356,8 @@ def parse_contents(contents, filename, date):
     )
 
 
-@callback(
-    Output("output-data-upload", "children"),
+@app.callback(
+    Output(component_id='output-data-upload', component_property='children'),
     Input("upload-data", "contents"),
     State("upload-data", "filename"),
     State("upload-data", "last_modified"),
@@ -398,15 +370,57 @@ def update_output(list_of_contents, list_of_names, list_of_dates):
         ]
         return children[-1]
 
-@callback(
+
+@app.callback(
     Output("download-cleaned-data-csv", "data"),
     Input("cleaned_data_download_btn_csv", "n_clicks"),
-    prevent_initial_call = True
+    prevent_initial_call=True,
 )
 def cleaned_data_to_file(n_clicks):
-    return dcc.send_data_frame(email_preprocessor.get_dataframe().to_csv, "cleaned_emails.csv")
+    return dcc.send_data_frame(
+        email_preprocessor.get_dataframe().to_csv, "cleaned_emails.csv"
+    )
+
+
+def populate_dash_table(dataframe):
+    return html.Div(
+        [
+            dash_table.DataTable(
+                # data=email_preprocessor.get_dataframe().to_dict("records"),
+                data=dataframe.to_dict("records"),
+                columns=[{"name": i, "id": i} for i in dataframe.columns],
+                style_data={
+                    "whiteSpace": "normal",
+                    "height": "auto",
+                },
+                fill_width=False,
+            ),
+        ]
+    )
+
+
+@app.callback(
+    Output(component_id='output-sentiment', component_property='children'),
+    Input("list-classified-button", "n_clicks"),
+    prevent_initial_call=True,
+)
+def display_classified(mouse_clicks):
+    classifier.Classify()
+    children = populate_dash_table(classifier.Get_Classified())
+    return children
+
+
+@app.callback(
+    Output(component_id='output-non-classified', component_property='children'),
+    Input("list-non-classified-button", "n_clicks"),
+    prevent_initial_call=True,
+)
+def display_non_classified(n_clicks):
+    children = populate_dash_table(classifier.Get_Unprocessed_Data())
+    return children
+
 
 server = app.server
 
 if __name__ == "__main__":
-    app.run_server(debug=False)
+    app.run_server(debug=True)
