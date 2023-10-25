@@ -155,7 +155,7 @@ app.layout = dbc.Tabs(
                             id="list-non-classified-button",
                         ),
                         html.Button(
-                            "Display Classified",
+                            "Classify and Display",
                             id="list-classified-button",
                         ),
                         html.Div(id="output-sentiment"),
