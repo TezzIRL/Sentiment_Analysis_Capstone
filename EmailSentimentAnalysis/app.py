@@ -27,6 +27,7 @@ import plotly.express as px
 from ESA_Modules import Preprocessor
 from ESA_Modules import Sentiment_Classifier
 import datetime
+import io
 
 webbrowser.get().open("http://127.0.0.1:8050")
 
@@ -116,9 +117,9 @@ app.layout = dbc.Tabs(
                             style={"color": "#0080FF", "font-size": "36px"},
                         ),
                         dcc.Upload(
-                            id="upload-processed-data",
+                            id="upload-preprocessed-data",
                             children=html.Div(
-                                ["Drag and Drop or ", html.A("Select Files")]
+                                ["Drag and Drop or ", html.A("Select File")]
                             ),
                             style={
                                 "width": "100%",
@@ -131,6 +132,7 @@ app.layout = dbc.Tabs(
                                 "margin": "10px",
                             },
                         ),
+                        html.Div(id="output-preprocessed-upload"),
                     ],
                     className="tab-content",
                     style={
@@ -354,6 +356,39 @@ def parse_contents(contents, filename, date):
         ]
     )
 
+# Parsing Content for Uploading Email Data - Not Good Code - CodeDebt - FIX!!!
+def load_preprocessed_csv(contents, filename, date):
+    content_type, content_string = contents.split(",")
+
+    decoded = base64.b64decode(content_string)
+    try:
+        if 'csv' in filename:
+            temp_df = pd.read_csv(
+                io.StringIO(decoded.decode('utf-8')))
+            
+            if cleaned_emails.empty:
+                cleaned_emails = temp_df
+            else:
+                cleaned_emails.append(temp_df)
+    except Exception as e:
+        print(e)
+        return html.Div(["There was an error processing this file."])
+
+    return html.Div(
+        [
+            dash_table.DataTable(
+                # data=email_preprocessor.get_dataframe().to_dict("records"),
+                data=cleaned_emails.to_dict("records"),
+                columns=[{"name": i, "id": i} for i in cleaned_emails.columns],
+                style_data={
+                    "whiteSpace": "normal",
+                    "height": "auto",
+                },
+                fill_width=False,
+            ),
+        ]
+    )
+
 
 @app.callback(
     Output(component_id='output-data-upload', component_property='children'),
@@ -369,6 +404,18 @@ def update_output(list_of_contents, list_of_names, list_of_dates):
         ]
         return children[-1]
 
+@app.callback(
+    Output(component_id='output-preprocessed-upload', component_property='children'),
+    Input("upload-preprocessed-data", "contents"),
+    State("upload-preprocessed-data", "filename"),
+    State("upload-preprocessed-data", "last_modified"),
+)
+def update_output(list_of_contents, list_of_names, list_of_dates):
+    if list_of_contents is not None:
+        children = [
+            load_preprocessed_csv(list_of_contents, list_of_names, list_of_dates)
+        ]
+        return children
 
 @app.callback(
     Output("download-cleaned-data-csv", "data"),
