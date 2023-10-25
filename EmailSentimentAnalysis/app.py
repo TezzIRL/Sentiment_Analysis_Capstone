@@ -131,8 +131,6 @@ app.layout = dbc.Tabs(
                                 "margin": "10px",
                             },
                         ),
-                        dcc.Download(id="download-processed-data"),
-                        # Add more content for this scenario
                     ],
                     className="tab-content",
                     style={
@@ -174,7 +172,7 @@ app.layout = dbc.Tabs(
             ],
         ),
         dbc.Tab(
-            label="Export Emails",
+            label="Export Processed Emails",
             children=[
                 html.Div(
                     [
@@ -185,8 +183,9 @@ app.layout = dbc.Tabs(
                         html.Button(
                             "Export Processed Data",
                             id="export-processed-button",
-                            n_clicks=0,
                         ),
+                        # Add more content for this scenario
+                        dcc.Download(id="download-processed-data-csv"),
                         # Add more content for this scenario
                     ],
                     className="tab-content",
@@ -381,6 +380,15 @@ def cleaned_data_to_file(n_clicks):
         email_preprocessor.get_dataframe().to_csv, "cleaned_emails.csv"
     )
 
+@app.callback(
+    Output("download-processed-data-csv", "data"),
+    Input("export-processed-button", "n_clicks"),
+    prevent_initial_call=True,
+)
+def cleaned_data_to_file(n_clicks):
+    return dcc.send_data_frame(
+        classifier.Get_Classified().to_csv, "sentiment_classified_emails.csv"
+    )
 
 def populate_dash_table(dataframe):
     return html.Div(
