@@ -47,6 +47,26 @@ app = dash.Dash(
 app.layout = dbc.Tabs(
     [
         dbc.Tab(
+            label="Home",
+            children=[
+                html.Div(
+                    [
+                        html.H1(
+                            "Emails",
+                            style={"color": "0080FF", "font-size": "36px"},
+                        ),
+                        html.Div(id="all-cleaned-emails"),
+                    ],
+                    className="tab-content",
+                    style={
+                        "background-color": "#EFFBFB",
+                        "padding": "20px",
+                        "border-radius": "10px",
+                    },
+                ),
+            ],
+        ),
+        dbc.Tab(
             label="Load and Preprocess",
             children=[
                 html.Div(
