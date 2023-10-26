@@ -3,12 +3,10 @@
 
 
 import webbrowser
-import dash
-from dash import html, dcc
+
 import dash_bootstrap_components as dbc
 
-from navbar import create_navbar
-
+import dash
 from dash import (
     Dash,
     dcc,
@@ -30,18 +28,6 @@ import datetime
 import io
 
 webbrowser.get().open("http://127.0.0.1:8050")
-
-email_preprocessor = Preprocessor()
-cleaned_emails = pd.DataFrame()
-classifier = Sentiment_Classifier()
-
-# NAVBAR = create_navbar()
-
-# Load your dataset
-# df = pd.read_csv('4763.csv')  # Replace with your dataset file
-
-# Get unique years from your dataset, including "All Years" option
-# available_years = ['All Years'] + df['Year'].unique().tolist()
 
 # custom font
 FA621 = "https://use.fontawesome.com/releases/v6.2.1/css/all.css"
@@ -161,7 +147,6 @@ app.layout = dbc.Tabs(
                             id="list-classified-button",
                         ),
                         html.Div(id="output-sentiment"),
-                        html.Div(id="output-non-classified"),
                         # Add more content for this scenario
                     ],
                     className="tab-content",
@@ -199,162 +184,9 @@ app.layout = dbc.Tabs(
                 ),
             ],
         ),
-        dbc.Tab(
-            label="Visualization",
-            children=[
-                html.Div(
-                    [
-                        html.H1(
-                            "Visualization",
-                            style={"color": "#0080FF", "font-size": "36px"},
-                        ),
-                        dcc.Dropdown(
-                            id="visualization-dropdown",
-                            options=[
-                                {"label": "Word Cloud", "value": "word-cloud"},
-                                {"label": "Network Graph", "value": "network-graph"},
-                                {"label": "Time Series", "value": "time-series"},
-                                {"label": "Tree Map", "value": "tree-map"},
-                                {"label": "Pie Chart", "value": "pie-chart"},
-                            ],
-                            value="word-cloud",
-                        ),
-                        # dbc.Row([
-                        #     dbc.Col(dcc.Dropdown(
-                        #         id='year-dropdown',
-                        #         options=[{'label': year, 'value': year} for year in available_years],
-                        #         value='All Years'  # Default to "All Years"
-                        #     )),
-                        # ]),
-                        dcc.Graph(
-                            id="visualization-graph",
-                            style={
-                                "width": "75%",
-                                "height": "550px",
-                            },  # Adjust the height as needed
-                        ),
-                    ],
-                    style={
-                        "background-color": "#EFFBFB",
-                        "padding": "20px",
-                        "border-radius": "10px",
-                    },
-                ),
-            ],
-        ),
     ]
 )
 
-
-# @app.callback(
-#     Output("download-data", "data"),
-#     Input("upload-data", "filename"),
-#     Input("upload-data", "contents"),
-# )
-# def download_uploaded_data(filename, contents):
-#     if filename is not None:
-#         content_type, content_string = contents.split(",")
-#         decoded = base64.b64decode(content_string)
-#         return {"content": decoded, "filename": filename}
-
-
-# @app.callback(
-#     Output("download-processed-data", "data"),
-#     Input("upload-processed-data", "filename"),
-#     Input("upload-processed-data", "contents"),
-# )
-# def download_uploaded_processed_data(filename, contents):
-#     if filename is not None:
-#         content_type, content_string = contents.split(",")
-#         decoded = base64.b64decode(content_string)
-#         return {"content": decoded, "filename": filename}
-
-
-# @app.callback(
-#     Output("download-sentiment-data", "data"),
-#     Input("upload-sentiment-data", "filename"),
-#     Input("upload-sentiment-data", "contents"),
-# )
-# def download_uploaded_sentiment_data(filename, contents):
-#     if filename is not None:
-#         content_type, content_string = contents.split(",")
-#         decoded = base64.b64decode(content_string)
-#         return {"content": decoded, "filename": filename}
-
-
-# @app.callback(
-#     Output("visualization-graph", "figure"),
-#     Input("visualization-dropdown", "value"),
-#     Input("year-dropdown", "value"),
-# )
-# def update_visualization(selected_option, selected_year):
-#     # if selected_year == 'All Years':
-#     #     filtered_df = df  # No filtering by year
-#     # else:
-#     #     filtered_df = df[df['Year'] == selected_year]
-
-#     if selected_option == "tree-map":
-#         # Create a Tree Map for the selected year
-#         # tree_map_fig = px.treemap(filtered_df, path=['Year', 'Label'], color='Label')
-#         # return tree_map_fig
-#         pass
-
-#     elif selected_option == "network-graph":
-#         # Create a Network Graph (Add your code here)
-#         return {}
-#     elif selected_option == "time-series":
-#         # Create a Time Series (Add your code here)
-#         return {}
-#     elif selected_option == "pie-chart":
-#         # Create a Pie Chart (Add your code here)
-#         return {}
-#     elif selected_option == "word-cloud":
-#         # Create a word cloud (Add your code here)
-#         return {}
-
-# Parsing Content for Uploading Email Data - Not Good Code - CodeDebt - FIX!!!
-def parse_contents(contents, filename, date):
-    content_type, content_string = contents.split(",")
-
-    decoded = base64.b64decode(content_string)
-    try:
-        # if 'csv' in filename:
-        #     df = pd.read_csv(
-        #         io.StringIO(decoded.decode('utf-8')))
-        # elif 'xls' in filename:
-        #     df = pd.read_excel(io.BytesIO(decoded))
-        unprocessed_email = decoded.decode("utf-8")
-        email_preprocessor.Simple_Clean(unprocessed_email)
-        cleaned_emails = email_preprocessor.get_dataframe()
-        
-        classifier.Load_Data_To_Process(cleaned_emails)
-
-    except Exception as e:
-        print(e)
-        return html.Div(["There was an error processing this file."])
-
-    return html.Div(
-        [
-            html.H5(filename),
-            html.H6(datetime.datetime.fromtimestamp(date)),
-            dash_table.DataTable(
-                # data=email_preprocessor.get_dataframe().to_dict("records"),
-                data=cleaned_emails.to_dict("records"),
-                columns=[{"name": i, "id": i} for i in cleaned_emails.columns],
-                style_data={
-                    "whiteSpace": "normal",
-                    "height": "auto",
-                },
-                fill_width=False,
-            ),
-            html.Hr(),
-            html.Div("Raw Content"),
-            html.Pre(
-                contents[0:200] + "...",
-                style={"whiteSpace": "pre-wrap", "wordBreak": "break-all"},
-            ),
-        ]
-    )
 
 # Parsing Content for Uploading Email Data - Not Good Code - CodeDebt - FIX!!!
 def load_preprocessed_csv(contents, filename, date):
@@ -362,10 +194,9 @@ def load_preprocessed_csv(contents, filename, date):
 
     decoded = base64.b64decode(content_string)
     try:
-        if 'csv' in filename:
-            temp_df = pd.read_csv(
-                io.StringIO(decoded.decode('utf-8')))
-            
+        if "csv" in filename:
+            temp_df = pd.read_csv(io.StringIO(decoded.decode("utf-8")))
+
             if cleaned_emails.empty:
                 cleaned_emails = temp_df
             else:
@@ -391,21 +222,7 @@ def load_preprocessed_csv(contents, filename, date):
 
 
 @app.callback(
-    Output(component_id='output-data-upload', component_property='children'),
-    Input("upload-data", "contents"),
-    State("upload-data", "filename"),
-    State("upload-data", "last_modified"),
-)
-def update_output(list_of_contents, list_of_names, list_of_dates):
-    if list_of_contents is not None:
-        children = [
-            parse_contents(c, n, d)
-            for c, n, d in zip(list_of_contents, list_of_names, list_of_dates)
-        ]
-        return children[-1]
-
-@app.callback(
-    Output(component_id='output-preprocessed-upload', component_property='children'),
+    Output(component_id="output-preprocessed-upload", component_property="children"),
     Input("upload-preprocessed-data", "contents"),
     State("upload-preprocessed-data", "filename"),
     State("upload-preprocessed-data", "last_modified"),
@@ -417,64 +234,137 @@ def update_output(list_of_contents, list_of_names, list_of_dates):
         ]
         return children
 
+
+############################
+# Upload Raw Emails - Clean - Append - Display
+############################
+
+
+# Parsing Content for Uploading Email Data - Not Good Code - CodeDebt - FIX!!!
+def parse_contents(contents, filename, date, preprocessor):
+    # split content into type and content
+    content_type, content_string = contents.split(",")
+    # decode content into readable string
+    decoded = base64.b64decode(content_string)
+    try:
+        # decode to utf8
+        unprocessed_email = decoded.decode("utf-8")
+        # clean email
+        preprocessor.Simple_Clean(unprocessed_email)
+        # export cleaned emails dataframe
+        cleaned_emails = preprocessor.get_dataframe()
+
+    except Exception as e:
+        print(e)
+        return html.Div(["There was an error processing this file."])
+
+    return dash_table.DataTable(
+        # data=email_preprocessor.get_dataframe().to_dict("records"),
+        data=cleaned_emails.to_dict("records"),
+        columns=[{"name": i, "id": i} for i in cleaned_emails.columns],
+        style_data={
+            "whiteSpace": "normal",
+            "height": "auto",
+        },
+        fill_width=False,
+    )
+
+
+# CALLBACK - Upload Raw Data
+@app.callback(
+    Output(component_id="output-data-upload", component_property="children"),
+    Input("upload-data", "contents"),
+    State("upload-data", "filename"),
+    State("upload-data", "last_modified"),
+)
+def update_output(list_of_contents, list_of_names, list_of_dates):
+    if list_of_contents is not None:
+        email_preprocessor = Preprocessor()
+        children = [
+            parse_contents(c, n, d, email_preprocessor)
+            for c, n, d in zip(list_of_contents, list_of_names, list_of_dates)
+        ]
+        return children[-1]
+
+
+############################
+# Download Cleaned Emails to CSV
+############################
+
+
 @app.callback(
     Output("download-cleaned-data-csv", "data"),
     Input("cleaned_data_download_btn_csv", "n_clicks"),
+    State("output-data-upload", "children"),
     prevent_initial_call=True,
 )
-def cleaned_data_to_file(n_clicks):
-    return dcc.send_data_frame(
-        email_preprocessor.get_dataframe().to_csv, "cleaned_emails.csv"
+def cleaned_data_to_file(n_clicks, content):
+    print(content)
+    tempDF = pd.DataFrame(content["props"]["data"])
+    return dcc.send_data_frame(tempDF.to_csv, "cleaned_emails.csv")
+
+
+############################
+# Upload Cleaned Email CSV - Append - Display
+############################
+
+
+############################
+# Grab from Table -> Classify -> Display
+############################
+
+
+def populate_dash_table(dataframe):
+    return dash_table.DataTable(
+        # data=email_preprocessor.get_dataframe().to_dict("records"),
+        data=dataframe.to_dict("records"),
+        columns=[{"name": i, "id": i} for i in dataframe.columns],
+        style_data={
+            "whiteSpace": "normal",
+            "height": "auto",
+        },
+        fill_width=False,
     )
+
+
+@app.callback(
+    Output(component_id="output-sentiment", component_property="children"),
+    Input("list-classified-button", "n_clicks"),
+    State("output-data-upload", "children"),
+    prevent_initial_call=True,
+)
+def display_classified(mouse_clicks, data_table):
+    tempDF = pd.DataFrame(data_table["props"]["data"])
+    classifier = Sentiment_Classifier()
+    classified_dataframe = classifier.Classify(tempDF)
+    children = populate_dash_table(classified_dataframe)
+    return children
+
+
+############################
+# Download Classified Emails to CSV
+############################
+
 
 @app.callback(
     Output("download-processed-data-csv", "data"),
     Input("export-processed-button", "n_clicks"),
+    State("output-sentiment", "children"),
     prevent_initial_call=True,
 )
-def cleaned_data_to_file(n_clicks):
-    return dcc.send_data_frame(
-        classifier.Get_Classified().to_csv, "sentiment_classified_emails.csv"
-    )
-
-def populate_dash_table(dataframe):
-    return html.Div(
-        [
-            dash_table.DataTable(
-                # data=email_preprocessor.get_dataframe().to_dict("records"),
-                data=dataframe.to_dict("records"),
-                columns=[{"name": i, "id": i} for i in dataframe.columns],
-                style_data={
-                    "whiteSpace": "normal",
-                    "height": "auto",
-                },
-                fill_width=False,
-            ),
-        ]
-    )
+def cleaned_data_to_file(n_clicks, content):
+    print(content)
+    tempDF = pd.DataFrame(content["props"]["data"])
+    return dcc.send_data_frame(tempDF.to_csv, "sentiment_classified_emails.csv")
 
 
-@app.callback(
-    Output(component_id='output-sentiment', component_property='children'),
-    Input("list-classified-button", "n_clicks"),
-    prevent_initial_call=True,
-)
-def display_classified(mouse_clicks):
-    classifier.Classify()
-    children = populate_dash_table(classifier.Get_Classified())
-    return children
+############################
+# Visualise Processed Emails
+############################
 
-
-@app.callback(
-    Output(component_id='output-non-classified', component_property='children'),
-    Input("list-non-classified-button", "n_clicks"),
-    prevent_initial_call=True,
-)
-def display_non_classified(n_clicks):
-    children = populate_dash_table(classifier.Get_Unprocessed_Data())
-    return children
-
-
+############################
+# INIT -> RUNS THE PROGRAM #
+############################
 server = app.server
 
 if __name__ == "__main__":

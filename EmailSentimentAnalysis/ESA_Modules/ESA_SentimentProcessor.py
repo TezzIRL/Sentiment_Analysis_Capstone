@@ -22,9 +22,12 @@ class Sentiment_Classifier:
         self.__classified_list = dataframe
         self.__classified_list["Labelled"] = ""
 
-    def Classify(self):
-        predicted = self.__clf.predict(self.__cleaned_data_to_process["Content"])
-        self.__classified_list["Labelled"] = predicted
+    def Classify(self, dataframe):
+        tempDF = dataframe
+        predicted = self.__clf.predict(tempDF["Content"])
+        tempDF["Labelled"] = predicted
+        return tempDF
+        
 
     def Get_Classified(self):
         return pd.DataFrame(self.__classified_list)

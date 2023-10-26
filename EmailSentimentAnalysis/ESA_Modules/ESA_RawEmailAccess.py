@@ -2,7 +2,6 @@
 
 from email.parser import Parser
 import re
-import time
 import pandas as pd
 from spellchecker import SpellChecker
 import nltk
