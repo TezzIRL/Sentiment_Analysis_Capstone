@@ -57,7 +57,7 @@ app.layout = dbc.Tabs(
                             "Unclassified Emails",
                             style={"color": "#0080FF", "font-size": "36px"},
                         ),
-                        html.Div(id="table-raw-email"),
+                        html.Div(id="table-unclassified-email"),
                     ],
                     className="tab-content",
                     style={
@@ -175,12 +175,8 @@ app.layout = dbc.Tabs(
                             style={"color": "#0080FF", "font-size": "36px"},
                         ),
                         html.Button(
-                            "Display Non Classified",
-                            id="list-non-classified-button",
-                        ),
-                        html.Button(
                             "Classify and Display",
-                            id="list-classified-button",
+                            id="btn-classify",
                         ),
                         html.Div(id="output-sentiment"),
                         # Add more content for this scenario
@@ -351,11 +347,11 @@ def cleaned_data_to_file(n_clicks, data_table):
 # Append Emails to Unclassified List - Remove Duplicates - Clear Upload Table
 ############################
 @app.callback([
-    Output('table-raw-email', 'children'),
+    Output('table-unclassified-email', 'children'),
     Output('output-cleaned-raw', 'children', allow_duplicate=True)
 ], [Input('btn-add-to-unclassified-table', 'n_clicks'),
     State("output-cleaned-raw", "children"),
-    State("table-raw-email", "children")],
+    State("table-unclassified-email", "children")],
               prevent_initial_call=True)
 def add_cleaned_emails_to_unclassified_table(clicks, raw_email_data_table, unclassified_table):
     # if there isnt any uploaded emails don't update
@@ -401,19 +397,21 @@ def clear_raw_email_output(clicks, data_table):
 ############################
 # Grab from Table -> Classify -> Display
 ############################
-
-# @app.callback(
-#     Output(component_id="output-sentiment", component_property="children"),
-#     Input("list-classified-button", "n_clicks"),
-#     State("output-data-upload", "children"),
-#     prevent_initial_call=True,
-# )
-# def display_classified(mouse_clicks, data_table):
-#     tempDF = pd.DataFrame(data_table["props"]["data"])
-#     classifier = Sentiment_Classifier()
-#     classified_dataframe = classifier.Classify(tempDF)
-#     children = populate_dash_table(classified_dataframe)
-#     return children
+@app.callback(
+    Output(component_id="output-sentiment", component_property="children"),
+    Input("btn-classify", "n_clicks"),
+    State("table-unclassified-email", "children"),
+    prevent_initial_call=True,
+)
+def display_classified(mouse_clicks, data_table):
+    if data_table is None:
+        PreventUpdate
+    else:
+        tempDF = pd.DataFrame(data_table["props"]["data"])
+        classifier = Sentiment_Classifier()
+        classified_dataframe = classifier.Classify(tempDF)
+        children = populate_dash_table(classified_dataframe)
+        return children
 
 
 ############################
