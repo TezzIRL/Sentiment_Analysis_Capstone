@@ -603,15 +603,16 @@ def update_visualization(selected_option, selected_year, data_table):
             [1, 0, -1],
         )
         # Create a DF with Grouped by Year, (SUM)Value
-        sumYearSentiment = sentiDF.groupby("Year")["Value"].sum()
-        sumYearSentiment.columns = ["Year", "Sentiment Value"]
-
-        if selected_year == "All Years":
-            filtered_df = sentiDF  # No filtering by year
-            filtered_df_time_serie = sumYearSentiment  # # No filtering by year
-        # else:
-        # filtered_df = sentiDF[sentiDF["Year"] == selected_year]
-        # filtered_df_time_serie = sumYearSentiment[sumYearSentiment["Year"] == selected_year]
+        sumYearSentiment = sentiDF.groupby("Year")["Value"].sum().reset_index()
+       # sumYearSentiment.columns = ["Year", "Sentiment Value"]
+        
+        filtered_df = sentiDF  # No filtering by year
+        filtered_df_time_series = sumYearSentiment  # # No filtering by year
+        
+        if selected_year != "All Years":
+            int_year = int(selected_year)
+            filtered_df = sentiDF[sentiDF['Year'] == int_year]
+            filtered_df_time_series = sumYearSentiment[sumYearSentiment["Year"] == int_year]
 
         df_wordCloud = sentimentDF["Content"]
 
@@ -630,7 +631,7 @@ def update_visualization(selected_option, selected_year, data_table):
             return network_data
         elif selected_option == "time-series":
             # Generate and return a Time Series visualization
-            time_series_data = generate_time_series(filtered_df_time_serie)
+            time_series_data = generate_time_series(filtered_df_time_series)
             return time_series_data
         elif selected_option == "tree-map":
             # Generate and return a Tree Map visualization
@@ -641,12 +642,12 @@ def update_visualization(selected_option, selected_year, data_table):
             pie_chart_data = generate_pie_chart()
             return pie_chart_data
 
-
+# HAVENT CHECKED - PROBABLY WRONG
 def str_text(text):
     text = str(text)
     return text
 
-
+# WORKS
 def generate_wordcloud(content):
     # Generate the word cloud
     wordcloud = WordCloud(width=2000, height=1200, background_color="white").generate(
