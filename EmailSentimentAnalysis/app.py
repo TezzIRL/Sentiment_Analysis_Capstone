@@ -610,11 +610,10 @@ def update_visualization(selected_option, selected_year, data_table):
         filtered_df_time_series = sumYearSentiment  # # No filtering by year
         
         if selected_year != "All Years":
-            int_year = int(selected_year)
-            filtered_df = sentiDF[sentiDF['Year'] == int_year]
-            filtered_df_time_series = sumYearSentiment[sumYearSentiment["Year"] == int_year]
+            filtered_df = sentiDF[sentiDF['Year'] == selected_year]
+            filtered_df_time_series = sumYearSentiment[sumYearSentiment["Year"] == selected_year]
 
-        df_wordCloud = sentimentDF["Content"]
+        df_wordCloud = filtered_df["Content"]
 
         if selected_option == "word-cloud":
 
@@ -626,7 +625,7 @@ def update_visualization(selected_option, selected_year, data_table):
 
         elif selected_option == "network-graph":
             # Generate and return a Network Graph visualization
-            network_data = generate_network_graph(sentiDF)
+            network_data = generate_network_graph(filtered_df)
             return network_data
         elif selected_option == "time-series":
             # Generate and return a Time Series visualization
