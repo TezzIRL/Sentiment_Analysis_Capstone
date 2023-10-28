@@ -48,6 +48,26 @@ app = dash.Dash(
 app.layout = dbc.Tabs(
     [
         dbc.Tab(
+            label="Unclassified Emails",
+            children=[
+                html.Div(
+                    [
+                        html.H1(
+                            "Unclassified Emails",
+                            style={"color": "#0080FF", "font-size": "36px"},
+                        ),
+                        html.Div(id="table-raw-email"),
+                    ],
+                    className="tab-content",
+                    style={
+                        "background-color": "#EFFBFB",
+                        "padding": "20px",
+                        "border-radius": "10px",
+                    },
+                ),
+            ],
+        ),
+        dbc.Tab(
             label="Load and Preprocess",
             children=[
                 html.Div(
