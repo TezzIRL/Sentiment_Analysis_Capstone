@@ -3,6 +3,7 @@
 
 
 import webbrowser
+from dash.dash import PreventUpdate
 
 import dash_bootstrap_components as dbc
 
@@ -47,26 +48,6 @@ app = dash.Dash(
 app.layout = dbc.Tabs(
     [
         dbc.Tab(
-            label="Home",
-            children=[
-                html.Div(
-                    [
-                        html.H1(
-                            "Emails",
-                            style={"color": "0080FF", "font-size": "36px"},
-                        ),
-                        html.Div(id="all-cleaned-emails"),
-                    ],
-                    className="tab-content",
-                    style={
-                        "background-color": "#EFFBFB",
-                        "padding": "20px",
-                        "border-radius": "10px",
-                    },
-                ),
-            ],
-        ),
-        dbc.Tab(
             label="Load and Preprocess",
             children=[
                 html.Div(
@@ -76,7 +57,7 @@ app.layout = dbc.Tabs(
                             style={"color": "#0080FF", "font-size": "36px"},
                         ),
                         dcc.Upload(
-                            id="upload-data",
+                            id="upload-raw-email",
                             children=html.Div(
                                 ["Drag and Drop or ", html.A("Select Files")]
                             ),
@@ -97,12 +78,12 @@ app.layout = dbc.Tabs(
                             [
                                 html.Button(
                                     "Download Cleaned Data",
-                                    id="cleaned_data_download_btn_csv",
+                                    id="btn-download-cleaned",
                                 ),
-                                dcc.Download(id="download-cleaned-data-csv"),
+                                dcc.Download(id="download-cleaned-csv"),
                             ]
                         ),
-                        html.Div(id="output-data-upload"),
+                        html.Div(id="output-cleaned-raw"),
                     ],
                     className="tab-content",
                     style={
@@ -208,51 +189,51 @@ app.layout = dbc.Tabs(
 )
 
 
-# Parsing Content for Uploading Email Data - Not Good Code - CodeDebt - FIX!!!
-def load_preprocessed_csv(contents, filename, date):
-    content_type, content_string = contents.split(",")
+# # Parsing Content for Uploading Email Data - Not Good Code - CodeDebt - FIX!!!
+# def load_preprocessed_csv(contents, filename, date):
+#     content_type, content_string = contents.split(",")
 
-    decoded = base64.b64decode(content_string)
-    try:
-        if "csv" in filename:
-            temp_df = pd.read_csv(io.StringIO(decoded.decode("utf-8")))
+#     decoded = base64.b64decode(content_string)
+#     try:
+#         if "csv" in filename:
+#             temp_df = pd.read_csv(io.StringIO(decoded.decode("utf-8")))
 
-            if cleaned_emails.empty:
-                cleaned_emails = temp_df
-            else:
-                cleaned_emails.append(temp_df)
-    except Exception as e:
-        print(e)
-        return html.Div(["There was an error processing this file."])
+#             if cleaned_emails.empty:
+#                 cleaned_emails = temp_df
+#             else:
+#                 cleaned_emails.append(temp_df)
+#     except Exception as e:
+#         print(e)
+#         return html.Div(["There was an error processing this file."])
 
-    return html.Div(
-        [
-            dash_table.DataTable(
-                # data=email_preprocessor.get_dataframe().to_dict("records"),
-                data=cleaned_emails.to_dict("records"),
-                columns=[{"name": i, "id": i} for i in cleaned_emails.columns],
-                style_data={
-                    "whiteSpace": "normal",
-                    "height": "auto",
-                },
-                fill_width=False,
-            ),
-        ]
-    )
+#     return html.Div(
+#         [
+#             dash_table.DataTable(
+#                 # data=email_preprocessor.get_dataframe().to_dict("records"),
+#                 data=cleaned_emails.to_dict("records"),
+#                 columns=[{"name": i, "id": i} for i in cleaned_emails.columns],
+#                 style_data={
+#                     "whiteSpace": "normal",
+#                     "height": "auto",
+#                 },
+#                 fill_width=False,
+#             ),
+#         ]
+#     )
 
 
-@app.callback(
-    Output(component_id="output-preprocessed-upload", component_property="children"),
-    Input("upload-preprocessed-data", "contents"),
-    State("upload-preprocessed-data", "filename"),
-    State("upload-preprocessed-data", "last_modified"),
-)
-def update_output(list_of_contents, list_of_names, list_of_dates):
-    if list_of_contents is not None:
-        children = [
-            load_preprocessed_csv(list_of_contents, list_of_names, list_of_dates)
-        ]
-        return children
+# @app.callback(
+#     Output(component_id="output-preprocessed-upload", component_property="children"),
+#     Input("upload-preprocessed-data", "contents"),
+#     State("upload-preprocessed-data", "filename"),
+#     State("upload-preprocessed-data", "last_modified"),
+# )
+# def update_output(list_of_contents, list_of_names, list_of_dates):
+#     if list_of_contents is not None:
+#         children = [
+#             load_preprocessed_csv(list_of_contents, list_of_names, list_of_dates)
+#         ]
+#         return children
 
 
 ############################
@@ -260,8 +241,20 @@ def update_output(list_of_contents, list_of_names, list_of_dates):
 ############################
 
 
+def populate_dash_table(dataframe):
+    return dash_table.DataTable(
+        data=dataframe.to_dict("records"),
+        columns=[{"name": i, "id": i} for i in dataframe.columns],
+        style_data={
+            "whiteSpace": "normal",
+            "height": "auto",
+        },
+        fill_width=False,
+    )
+
+
 # Parsing Content for Uploading Email Data - Not Good Code - CodeDebt - FIX!!!
-def parse_contents(contents, filename, date, preprocessor):
+def parse_raw_email_contents(contents, filename, date, preprocessor):
     # split content into type and content
     content_type, content_string = contents.split(",")
     # decode content into readable string
@@ -278,50 +271,47 @@ def parse_contents(contents, filename, date, preprocessor):
         print(e)
         return html.Div(["There was an error processing this file."])
 
-    return dash_table.DataTable(
-        # data=email_preprocessor.get_dataframe().to_dict("records"),
-        data=cleaned_emails.to_dict("records"),
-        columns=[{"name": i, "id": i} for i in cleaned_emails.columns],
-        style_data={
-            "whiteSpace": "normal",
-            "height": "auto",
-        },
-        fill_width=False,
-    )
+    new_dash_table = populate_dash_table(cleaned_emails)
+
+    return new_dash_table
 
 
 # CALLBACK - Upload Raw Data
 @app.callback(
-    Output(component_id="output-data-upload", component_property="children"),
-    Input("upload-data", "contents"),
-    State("upload-data", "filename"),
-    State("upload-data", "last_modified"),
+    Output(component_id="output-cleaned-raw", component_property="children"),
+    Input("upload-raw-email", "contents"),
+    State("upload-raw-email", "filename"),
+    State("upload-raw-email", "last_modified"),
 )
-def update_output(list_of_contents, list_of_names, list_of_dates):
+def update_raw_email_output(list_of_contents, list_of_names, list_of_dates):
     if list_of_contents is not None:
         email_preprocessor = Preprocessor()
         children = [
-            parse_contents(c, n, d, email_preprocessor)
+            parse_raw_email_contents(c, n, d, email_preprocessor)
             for c, n, d in zip(list_of_contents, list_of_names, list_of_dates)
         ]
+        # return only the last data table
         return children[-1]
-
 
 ############################
 # Download Cleaned Emails to CSV
 ############################
 
-
+# - WORKS
 @app.callback(
-    Output("download-cleaned-data-csv", "data"),
-    Input("cleaned_data_download_btn_csv", "n_clicks"),
-    State("output-data-upload", "children"),
+    Output("download-cleaned-csv", "data"),
+    Input("btn-download-cleaned", "n_clicks"),
+    State("output-cleaned-raw", "children"),
     prevent_initial_call=True,
 )
-def cleaned_data_to_file(n_clicks, content):
-    print(content)
-    tempDF = pd.DataFrame(content["props"]["data"])
-    return dcc.send_data_frame(tempDF.to_csv, "cleaned_emails.csv")
+def cleaned_data_to_file(n_clicks, data_table):
+    # if data_table is none, prevent return
+    if (data_table is None):
+        raise PreventUpdate
+    else:
+        # convert data table into a data frame so that it can be converted to a csv file
+        tempDF = pd.DataFrame(data_table["props"]["data"])
+        return dcc.send_data_frame(tempDF.to_csv, "cleaned_emails.csv")
 
 
 ############################
@@ -333,32 +323,18 @@ def cleaned_data_to_file(n_clicks, content):
 # Grab from Table -> Classify -> Display
 ############################
 
-
-def populate_dash_table(dataframe):
-    return dash_table.DataTable(
-        # data=email_preprocessor.get_dataframe().to_dict("records"),
-        data=dataframe.to_dict("records"),
-        columns=[{"name": i, "id": i} for i in dataframe.columns],
-        style_data={
-            "whiteSpace": "normal",
-            "height": "auto",
-        },
-        fill_width=False,
-    )
-
-
-@app.callback(
-    Output(component_id="output-sentiment", component_property="children"),
-    Input("list-classified-button", "n_clicks"),
-    State("output-data-upload", "children"),
-    prevent_initial_call=True,
-)
-def display_classified(mouse_clicks, data_table):
-    tempDF = pd.DataFrame(data_table["props"]["data"])
-    classifier = Sentiment_Classifier()
-    classified_dataframe = classifier.Classify(tempDF)
-    children = populate_dash_table(classified_dataframe)
-    return children
+# @app.callback(
+#     Output(component_id="output-sentiment", component_property="children"),
+#     Input("list-classified-button", "n_clicks"),
+#     State("output-data-upload", "children"),
+#     prevent_initial_call=True,
+# )
+# def display_classified(mouse_clicks, data_table):
+#     tempDF = pd.DataFrame(data_table["props"]["data"])
+#     classifier = Sentiment_Classifier()
+#     classified_dataframe = classifier.Classify(tempDF)
+#     children = populate_dash_table(classified_dataframe)
+#     return children
 
 
 ############################
@@ -366,16 +342,16 @@ def display_classified(mouse_clicks, data_table):
 ############################
 
 
-@app.callback(
-    Output("download-processed-data-csv", "data"),
-    Input("export-processed-button", "n_clicks"),
-    State("output-sentiment", "children"),
-    prevent_initial_call=True,
-)
-def cleaned_data_to_file(n_clicks, content):
-    print(content)
-    tempDF = pd.DataFrame(content["props"]["data"])
-    return dcc.send_data_frame(tempDF.to_csv, "sentiment_classified_emails.csv")
+# @app.callback(
+#     Output("download-processed-data-csv", "data"),
+#     Input("export-processed-button", "n_clicks"),
+#     State("output-sentiment", "children"),
+#     prevent_initial_call=True,
+# )
+# def cleaned_data_to_file(n_clicks, content):
+#     print(content)
+#     tempDF = pd.DataFrame(content["props"]["data"])
+#     return dcc.send_data_frame(tempDF.to_csv, "sentiment_classified_emails.csv")
 
 
 ############################

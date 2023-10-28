@@ -117,33 +117,52 @@ class Preprocessor:
         lemm_text = [self.__lemmatizer.lemmatize(word) for word in text]
         return lemm_text
 
+    # includes stop word removal, tokenising and lemmatizing
     def CleanEmails(self, raw_email_content):
         self.__emails = [['Subject', 'From', 'To', 'Date', 'Message-ID', 'Content', 'No Punctuation', 'Lowered', 'Tokenized', 'No-Stop-Words', 'Lemmatized']]
         preprocessed_email_content = self.__extract_email_body(raw_email_content)
         preprocessed_email_content = self.__remove_urls(preprocessed_email_content)
         preprocessed_email_content = self.__remove_email_addresses(preprocessed_email_content)
+        # remove punctuation
         cleaned_email_content = self.__remove_punctuation(preprocessed_email_content)
+        # lower case entire content
         lower_case_content = cleaned_email_content.lower()
+        # tokenize words
         tokenized_content = word_tokenize(lower_case_content)
+        # spell check
         spell_checked_content = self.__correct_spelling(tokenized_content)
+        # remove stop words
         stopword_free_content = self.__remove_stopwords(spell_checked_content)
+        # lemmatize
         lemmatized_content = self.__Lemmatization(stopword_free_content)
+
+        # seperate out day month year and time
+        email = Parser().parsestr(raw_email_content)
+        email_datetime = parser.parse(email.get("date", "N/A"))
+        email_year = email_datetime.strftime("%Y")
+        email_month = email_datetime.strftime("%m")
+        email_day = email_datetime.strftime("%d")
+        email_time = email_datetime.strftime("%H:%M")
 
         # email content
         if preprocessed_email_content and not preprocessed_email_content.isspace():
             email = Parser().parsestr(raw_email_content)
-            self.__emails.append([email.get("subject", "N/A"), email.get("from", "N/A"), email.get("to", "N/A"), email.get("date", "N/A"), email.get("message-id", "N/A"), preprocessed_email_content, cleaned_email_content, lower_case_content, tokenized_content,stopword_free_content, lemmatized_content])
+            self.__emails.append([email.get("subject", "N/A"), email.get("from", "N/A"), email.get("to", "N/A"), email_year, email_month, email_day, email_time, email.get("message-id", "N/A"), lemmatized_content])
 
     def Simple_Clean(self, raw_email_content):
         preprocessed_email_content = self.__extract_email_body(raw_email_content)
         preprocessed_email_content = self.__remove_urls(preprocessed_email_content)
         preprocessed_email_content = self.__remove_email_addresses(preprocessed_email_content)
+        # remove punctuation
         cleaned_email_content = self.__remove_punctuation(preprocessed_email_content)
+        # lower email content
         lower_case_content = cleaned_email_content.lower()
+        # get rid of new lines
         no_new_lines_content = lower_case_content.replace('\n', ' ').replace('\r', '')
+        # strip additional white space
         stripped_content = no_new_lines_content.strip()
         
-
+        #seperate out day month year and time
         email = Parser().parsestr(raw_email_content)
         email_datetime = parser.parse(email.get("date", "N/A"))
         email_year = email_datetime.strftime("%Y")

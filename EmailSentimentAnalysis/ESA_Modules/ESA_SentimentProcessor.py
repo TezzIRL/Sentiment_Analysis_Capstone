@@ -17,11 +17,6 @@ class Sentiment_Classifier:
         self.__classified_list = [[]]
         self.__cleaned_data_to_process = [[]]
 
-    def Load_Data_To_Process(self, dataframe):
-        self.__cleaned_data_to_process = dataframe
-        self.__classified_list = dataframe
-        self.__classified_list["Labelled"] = ""
-
     def Classify(self, dataframe):
         tempDF = dataframe
         predicted = self.__clf.predict(tempDF["Content"])

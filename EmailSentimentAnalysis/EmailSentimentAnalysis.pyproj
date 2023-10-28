@@ -23,13 +23,8 @@
   </PropertyGroup>
   <ItemGroup>
     <Compile Include="app.py" />
-    <Compile Include="ESA_Modules\ESA_DatasetBuilder.py" />
-    <Compile Include="ESA_Modules\ESA_Exporter.py" />
-    <Compile Include="ESA_Modules\ESA_PreprocessedEmailAccess.py" />
-    <Compile Include="ESA_Modules\ESA_ProcessedEmailAccess.py" />
     <Compile Include="ESA_Modules\ESA_RawEmailAccess.py" />
     <Compile Include="ESA_Modules\ESA_SentimentProcessor.py" />
-    <Compile Include="ESA_Modules\ESA_Visualiser.py" />
     <Compile Include="ESA_Modules\__init__.py" />
   </ItemGroup>
   <ItemGroup>
