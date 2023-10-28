@@ -354,15 +354,31 @@ def cleaned_data_to_file(n_clicks, data_table):
     Output('table-raw-email', 'children'),
     Output('output-cleaned-raw', 'children', allow_duplicate=True)
 ], [Input('btn-add-to-unclassified-table', 'n_clicks'),
-    State("output-cleaned-raw", "children")],
+    State("output-cleaned-raw", "children"),
+    State("table-raw-email", "children")],
               prevent_initial_call=True)
-def add_cleaned_emails_to_unclassified_table(clicks, data_table):
-    print("This function works")
-    if(data_table is None):
+def add_cleaned_emails_to_unclassified_table(clicks, raw_email_data_table, unclassified_table):
+    # if there isnt any uploaded emails don't update
+    if(raw_email_data_table is None):
         raise PreventUpdate
     else:
-        print("Data in table to move")
-        raise PreventUpdate
+        tempRawDF = pd.DataFrame(raw_email_data_table["props"]["data"])
+        # check if the unclassified table has been generated yet
+        if (unclassified_table is not None):
+            # convert table to dataframe
+            tempUnclassifiedDF = pd.DataFrame(unclassified_table["props"]["data"])
+            # concat the unclassified dataframe with the raw email dataframe
+            unifiedDF = pd.concat([tempUnclassifiedDF, tempRawDF])
+            # remove any duplicates that may have been included
+            unifiedNoDupDF = unifiedDF.drop_duplicates()
+            # convert dataframe back into a dash table
+            unified_table = populate_dash_table(unifiedNoDupDF)
+            # return unified table and none (removes the upload table)
+            return unified_table, None
+        else:
+            new_table = populate_dash_table(tempRawDF)
+            return new_table, None
+        
 
 
 ############################
