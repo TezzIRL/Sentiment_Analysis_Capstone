@@ -382,6 +382,8 @@ def load_preprocessed_csv(contents, filename, date):
     try:
         if "csv" in filename:
             temp_df = pd.read_csv(io.StringIO(decoded.decode("utf-8")), index_col=False)
+        else:
+            raise Exception
     except Exception as e:
         print(e)
         return html.Div(["There was an error processing this file."])
@@ -577,7 +579,7 @@ def create_visualisations(data_table):
     return children
 
 
-# UPDATE - NOT WORKING
+# UPDATE - PARTIALLY WORKING
 @app.callback(
     Output("visualization-graph", "figure"),
     Input("visualization-dropdown", "value"),
