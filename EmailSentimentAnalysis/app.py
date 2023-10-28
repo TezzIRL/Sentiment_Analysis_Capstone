@@ -33,6 +33,7 @@ import plotly.express as px
 import matplotlib.pyplot as plt
 from wordcloud import WordCloud
 from scipy.interpolate import make_interp_spline
+import numpy as np
 
 webbrowser.get().open("http://127.0.0.1:8050")
 
