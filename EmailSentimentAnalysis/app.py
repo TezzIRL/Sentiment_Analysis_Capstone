@@ -18,6 +18,7 @@ from dash import (
     State,
     register_page,
     callback,
+    ctx,
 )
 
 import base64
@@ -345,6 +346,28 @@ def cleaned_data_to_file(n_clicks, data_table):
         # convert data table into a data frame so that it can be converted to a csv file
         tempDF = pd.DataFrame(data_table["props"]["data"])
         return dcc.send_data_frame(tempDF.to_csv, "cleaned_emails.csv")
+
+############################
+# Append Emails to Unclassified List - Remove Duplicates - Clear Upload Table
+############################
+@app.callback([
+    Output('table-raw-email', 'children'),
+    Output('output-cleaned-raw', 'children', allow_duplicate=True)
+], [Input('btn-add-to-unclassified-table', 'n_clicks'),
+    State("output-cleaned-raw", "children")],
+              prevent_initial_call=True)
+def add_cleaned_emails_to_unclassified_table(clicks, data_table):
+    print("This function works")
+    if(data_table is None):
+        raise PreventUpdate
+    else:
+        print("Data in table to move")
+        raise PreventUpdate
+
+
+############################
+# Clear Upload Table
+############################
 
 
 ############################
