@@ -379,13 +379,20 @@ def add_cleaned_emails_to_unclassified_table(clicks, raw_email_data_table, uncla
             new_table = populate_dash_table(tempRawDF)
             return new_table, None
         
-
-
 ############################
 # Clear Upload Table
 ############################
-
-
+@app.callback(
+    Output('output-cleaned-raw', 'children', allow_duplicate=True),
+    Input('btn-clear-raw-output', 'n_clicks'),
+    State('output-cleaned-raw', 'children'),
+    prevent_initial_call=True)
+def clear_raw_email_output(clicks, data_table):
+    if (data_table is None):
+        PreventUpdate
+    else:
+        return None
+    
 ############################
 # Upload Cleaned Email CSV - Append - Display
 ############################
