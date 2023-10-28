@@ -81,7 +81,8 @@ app.layout = dbc.Tabs(
                                     id="btn-download-cleaned",
                                 ),
                                 dcc.Download(id="download-cleaned-csv"),
-                            ]
+                            ],
+                            style={"margin-bottom": "10px"},
                         ),
                         html.Div(id="output-cleaned-raw"),
                     ],
@@ -235,23 +236,22 @@ app.layout = dbc.Tabs(
 #         ]
 #         return children
 
-
-############################
-# Upload Raw Emails - Clean - Append - Display
-############################
-
-
+# Converts a dataframe object into a data table
 def populate_dash_table(dataframe):
     return dash_table.DataTable(
         data=dataframe.to_dict("records"),
         columns=[{"name": i, "id": i} for i in dataframe.columns],
+        # Generic Styling
         style_data={
             "whiteSpace": "normal",
             "height": "auto",
         },
-        fill_width=False,
+        fill_width=True,
     )
 
+############################
+# Upload Raw Emails - Clean - Append - Display
+############################
 
 # Parsing Content for Uploading Email Data - Not Good Code - CodeDebt - FIX!!!
 def parse_raw_email_contents(contents, filename, date, preprocessor):
