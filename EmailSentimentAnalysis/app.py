@@ -245,44 +245,7 @@ app.layout = dbc.Tabs(
             label="Visualization",
             children=[
                 html.Div(
-                    [
-                        html.H1(
-                            "Visualization",
-                            style={"color": "#0080FF", "font-size": "36px"},
-                        ),
-                        dcc.Dropdown(
-                            id="visualization-dropdown",
-                            options=[
-                                {"label": "Word Cloud", "value": "word-cloud"},
-                                {"label": "Network Graph", "value": "network-graph"},
-                                {"label": "Time Series", "value": "time-series"},
-                                {"label": "Tree Map", "value": "tree-map"},
-                                {"label": "Pie Chart", "value": "pie-chart"},
-                            ],
-                            value="word-cloud",
-                        ),
-                        dbc.Row(
-                            [
-                                dbc.Col(
-                                    dcc.Dropdown(
-                                        id="year-dropdown",
-                                        options=[
-                                            {"label": year, "value": year}
-                                            for year in available_years
-                                        ],
-                                        value="All Years",  # Default to "All Years"
-                                    )
-                                ),
-                            ]
-                        ),
-                        dcc.Graph(
-                            id="visualization-graph",
-                            style={
-                                "width": "100%",
-                                "height": "700px",
-                            },  # Adjust the height as needed
-                        ),
-                    ],
+                    id="visualisation-dashboard",
                     style={
                         "background-color": "#EFFBFB",
                         "padding": "20px",
@@ -293,6 +256,7 @@ app.layout = dbc.Tabs(
         ),
     ]
 )
+
 
 # Converts a dataframe object into a data table
 def populate_dash_table(dataframe):
@@ -306,6 +270,7 @@ def populate_dash_table(dataframe):
         },
         fill_width=True,
     )
+
 
 ############################
 # Upload Raw Emails - Clean - Append - Display
@@ -331,6 +296,7 @@ def parse_raw_email_contents(contents, filename, date, preprocessor):
     new_dash_table = populate_dash_table(cleaned_emails)
 
     return new_dash_table
+
 
 # CALLBACK - Upload Raw Data
 @app.callback(
@@ -556,62 +522,129 @@ def cleaned_data_to_file(n_clicks, data_table):
 ############################
 # Visualise Processed Emails
 ############################
-
+# CREATE
 @app.callback(
-    Output('visualization-graph', 'figure'),
-    Input('visualization-dropdown', 'value'),
-    Input('year-dropdown', 'value')
+    Output("visualisation-dashboard", "children"),
+    Input("output-sentiment", "children"),
 )
-def update_visualization(selected_option, selected_year):
-
-    if selected_year == 'All Years':
-        filtered_df = df  # No filtering by year
-        filtered_df_time_serie = df_time_serie  # # No filtering by year
+def create_visualisations(data_table):
+    if data_table is None:
+        raise PreventUpdate
     else:
-        filtered_df = df[df['Year'] == selected_year]
-        filtered_df_time_serie = df_time_serie[df_time_serie['Date'].dt.year == selected_year]
+        print("Visuals are GO")
+        # Get Sentiment Data
+        sentimentDF = pd.DataFrame(data_table["props"]["data"])
+        
+        available_years = ['All Years'] + sentimentDF['Year'].unique().tolist()
 
-    if selected_option == 'word-cloud':
+        children = [
+            html.H1(
+                "Visualization",
+                style={"color": "#0080FF", "font-size": "36px"},
+            ),
+            dcc.Dropdown(
+                id="visualization-dropdown",
+                options=[
+                    {"label": "Word Cloud", "value": "word-cloud"},
+                    {"label": "Network Graph", "value": "network-graph"},
+                    {"label": "Time Series", "value": "time-series"},
+                    {"label": "Tree Map", "value": "tree-map"},
+                    {"label": "Pie Chart", "value": "pie-chart"},
+                ],
+                value="word-cloud",
+            ),
+            dbc.Row(
+                [
+                    dbc.Col(
+                        dcc.Dropdown(
+                            id="year-dropdown",
+                            options=[
+                                {"label": year, "value": year}
+                                for year in available_years
+                            ],
+                            value="All Years",  # Default to "All Years"
+                        )
+                    ),
+                ]
+            ),
+            dcc.Graph(
+                id="visualization-graph",
+                style={
+                    "width": "100%",
+                    "height": "700px",
+                },  # Adjust the height as needed
+            ),
+        ]
+    return children
 
-        df_wordCloud['Text'] = df_wordCloud['Text'].apply(str_text)
 
-        all_text = ' '.join(df_wordCloud['Text'])
+# UPDATE - NOT WORKING
+@app.callback(
+    [
+        Output("visualization-graph", "figure"),
+    ],
+    [
+        Input("visualization-dropdown", "value"),
+        Input("year-dropdown", "value"),
+        State("output-sentiment", "children"),
+    ],
+)
+def update_visualization(selected_option, selected_year, data_table):
+    if data_table is None:
+        raise PreventUpdate
+    else:
+        sentimentDF = pd.DataFrame(data_table["props"]["data"])
+        raise PreventUpdate
+        # if selected_year == "All Years":
+        #     filtered_df = df  # No filtering by year
+        #     filtered_df_time_serie = df_time_serie  # # No filtering by year
+        # else:
+        #     filtered_df = df[df["Year"] == selected_year]
+        #     filtered_df_time_serie = df_time_serie[
+        #         df_time_serie["Date"].dt.year == selected_year
+        #     ]
 
-        wordcloud_data = generate_wordcloud(all_text)
+        # if selected_option == "word-cloud":
+        #     df_wordCloud["Text"] = df_wordCloud["Text"].apply(str_text)
 
-        return wordcloud_data
+        #     all_text = " ".join(df_wordCloud["Text"])
 
-    elif selected_option == 'network-graph':
-        # Generate and return a Network Graph visualization
-        network_data = generate_network_graph()
-        return network_data
-    elif selected_option == 'time-series':
-        # Generate and return a Time Series visualization
-        time_series_data = generate_time_series(filtered_df_time_serie)
-        return time_series_data
-    elif selected_option == 'tree-map':
-        # Generate and return a Tree Map visualization
-        tree_map_data = generate_tree_map(filtered_df)
-        return tree_map_data
-    elif selected_option == 'pie-chart':
-        # Generate and return a Pie Chart visualization
-        pie_chart_data = generate_pie_chart()
-        return pie_chart_data
+        #     wordcloud_data = generate_wordcloud(all_text)
+
+        #     return wordcloud_data
+
+        # elif selected_option == "network-graph":
+        #     # Generate and return a Network Graph visualization
+        #     network_data = generate_network_graph()
+        #     return network_data
+        # elif selected_option == "time-series":
+        #     # Generate and return a Time Series visualization
+        #     time_series_data = generate_time_series(filtered_df_time_serie)
+        #     return time_series_data
+        # elif selected_option == "tree-map":
+        #     # Generate and return a Tree Map visualization
+        #     tree_map_data = generate_tree_map(filtered_df)
+        #     return tree_map_data
+        # elif selected_option == "pie-chart":
+        #     # Generate and return a Pie Chart visualization
+        #     pie_chart_data = generate_pie_chart()
+        #     return pie_chart_data
+
 
 def str_text(text):
     text = str(text)
     return text
 
 
-
 def generate_wordcloud(content):
-
     # Generate the word cloud
-    wordcloud = WordCloud(width=1000, height=600, background_color="white").generate(content)
+    wordcloud = WordCloud(width=1000, height=600, background_color="white").generate(
+        content
+    )
 
     # Create a BytesIO buffer to save the word cloud image
     buffer = io.BytesIO()
-    
+
     # Save the word cloud image to the buffer
     plt.figure(figsize=(10, 5))
     plt.imshow(wordcloud, interpolation="bilinear")
@@ -619,132 +652,129 @@ def generate_wordcloud(content):
     plt.title("Word Cloud")
     plt.savefig(buffer, format="png")
     buffer.seek(0)
-    
+
     # Encode the image as base64
     wordcloud_base64 = base64.b64encode(buffer.read()).decode()
 
     return {
-        'data': [{
-            'x': [0],
-            'y': [0],
-            'mode': 'text',
-            'text': ['Word Cloud'],
-            'textfont': {
-                'size': 24,
-                'color': 'black'  # Customize text color
+        "data": [
+            {
+                "x": [0],
+                "y": [0],
+                "mode": "text",
+                "text": ["Word Cloud"],
+                "textfont": {"size": 24, "color": "black"},  # Customize text color
             }
-        }],
-        'layout': {
-            'images': [
+        ],
+        "layout": {
+            "images": [
                 {
-                    'source': 'data:image/png;base64,{}'.format(wordcloud_base64),
-                    'x': 0,
-                    'y': 0,
-                    'xref': 'x',
-                    'yref': 'y',
-                    'sizex': 1,
-                    'sizey': 1,
-                    'xanchor': 'center',
-                    'yanchor': 'middle'
+                    "source": "data:image/png;base64,{}".format(wordcloud_base64),
+                    "x": 0,
+                    "y": 0,
+                    "xref": "x",
+                    "yref": "y",
+                    "sizex": 1,
+                    "sizey": 1,
+                    "xanchor": "center",
+                    "yanchor": "middle",
                 }
             ],
-            'width': 1000,
-            'height': 600,
-            'xaxis': {
-                'showgrid': False,
-                'showticklabels': False,
-                'zeroline': False
-            },
-            'yaxis': {
-                'showgrid': False,
-                'showticklabels': False,
-                'zeroline': False
-            }
-        }
+            "width": 1000,
+            "height": 600,
+            "xaxis": {"showgrid": False, "showticklabels": False, "zeroline": False},
+            "yaxis": {"showgrid": False, "showticklabels": False, "zeroline": False},
+        },
     }
+
 
 def generate_network_graph():
     # Generate Network Graph data here
-        # Generate and return a Pie Chart visualization
-    df = pd.read_csv('master_date_score.csv')  # Replace with your dataset file
-    label_counts = df['label'].value_counts()
+    # Generate and return a Pie Chart visualization
+    df = pd.read_csv("master_date_score.csv")  # Replace with your dataset file
+    label_counts = df["label"].value_counts()
 
     labels = label_counts.index
     values = label_counts.values
 
     pie_chart_data = {
-        'data': [{
-            'type': 'pie',
-            'labels': labels,
-            'values': values,
-        }],
-        'layout': {
-            'title': 'Distribution of Labels'
-        }
+        "data": [
+            {
+                "type": "pie",
+                "labels": labels,
+                "values": values,
+            }
+        ],
+        "layout": {"title": "Distribution of Labels"},
     }
     return pie_chart_data
 
+
 def generate_time_series(df):
-
-
     # Sort the DataFrame by 'Date' to ensure it's in the right order for plotting
-    df = df.sort_values(by='Date')
-    
+    df = df.sort_values(by="Date")
 
     # Create a new DataFrame for the smoothed curve
     smooth_df = pd.DataFrame()
-    num_dates = np.linspace(0, 1, len(df))  # Create a linear space of numerical dates between 0 and 1
+    num_dates = np.linspace(
+        0, 1, len(df)
+    )  # Create a linear space of numerical dates between 0 and 1
 
     # Create a spline function
-    spline = make_interp_spline(num_dates, df['score'], k=3)
+    spline = make_interp_spline(num_dates, df["score"], k=3)
 
     # Generate the numerical dates for the smoothed curve
-    num_dates_smooth = np.linspace(0, 1, 100)  # Adjust the number of points (100 in this example)
-    
+    num_dates_smooth = np.linspace(
+        0, 1, 100
+    )  # Adjust the number of points (100 in this example)
+
     # Get the smoothed scores for the numerical dates
     scores_smooth = spline(num_dates_smooth)
 
     # Convert numerical dates back to actual dates
-    smooth_dates = df['Date'].min() + pd.to_timedelta(num_dates_smooth * (df['Date'].max() - df['Date'].min()))
-
-    smooth_df['Date'] = smooth_dates
-    smooth_df['score'] = scores_smooth
-
-    fig = px.scatter(
-        df, x='Date', y='score',
-        title='Score by Date'
+    smooth_dates = df["Date"].min() + pd.to_timedelta(
+        num_dates_smooth * (df["Date"].max() - df["Date"].min())
     )
 
+    smooth_df["Date"] = smooth_dates
+    smooth_df["score"] = scores_smooth
+
+    fig = px.scatter(df, x="Date", y="score", title="Score by Date")
+
     # Add the smoothed curve
-    fig.add_scatter(x=smooth_df['Date'], y=smooth_df['score'], mode='lines', name='Smoothed Curve')
+    fig.add_scatter(
+        x=smooth_df["Date"], y=smooth_df["score"], mode="lines", name="Smoothed Curve"
+    )
 
     return fig
 
-def generate_tree_map(df):
 
+def generate_tree_map(df):
     # Create a Tree Map for the selected year
-    tree_map_fig = px.treemap(df, path=['Year', 'Label'], color='Label')
+    tree_map_fig = px.treemap(df, path=["Year", "Label"], color="Label")
     return tree_map_fig
+
 
 def generate_pie_chart():
     # Generate and return a Pie Chart visualization
-    df = pd.read_csv('master_date_score.csv')  # Replace with dataset file
-    label_counts = df['label'].value_counts()
+    df = pd.read_csv("master_date_score.csv")  # Replace with dataset file
+    label_counts = df["label"].value_counts()
 
     labels = label_counts.index
     values = label_counts.values
 
     pie_chart_data = {
-        'data': [{
-            'type': 'pie',
-            'labels': labels,
-            'values': values,
-        }],
-        'layout': {
-            'title': 'Distribution of Labels'
-        }
+        "data": [
+            {
+                "type": "pie",
+                "labels": labels,
+                "values": values,
+            }
+        ],
+        "layout": {"title": "Distribution of Labels"},
     }
-    return pie_chart_data    
+    return pie_chart_data
+
 
 ############################
 # INIT -> RUNS THE PROGRAM #
