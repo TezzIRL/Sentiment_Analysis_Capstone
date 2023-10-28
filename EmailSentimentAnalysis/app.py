@@ -29,6 +29,14 @@ from ESA_Modules import Sentiment_Classifier
 import datetime
 import io
 
+import plotly.express as px
+import matplotlib.pyplot as plt
+from wordcloud import WordCloud
+from scipy.interpolate import make_interp_spline
+import numpy as np
+import networkx as nx
+import plotly.graph_objs as go
+
 webbrowser.get().open("http://127.0.0.1:8050")
 
 # custom font
@@ -235,11 +243,21 @@ app.layout = dbc.Tabs(
                 ),
             ],
         ),
+        dbc.Tab(
+            label="Visualization",
+            children=[
+                html.Div(
+                    id="visualisation-dashboard",
+                    style={
+                        "background-color": "#EFFBFB",
+                        "padding": "20px",
+                        "border-radius": "10px",
+                    },
+                ),
+            ],
+        ),
     ]
 )
-
-
-# # Parsing Content for Uploading Email Data - Not Good Code - CodeDebt - FIX!!!
 
 
 # Converts a dataframe object into a data table
@@ -280,6 +298,7 @@ def parse_raw_email_contents(contents, filename, date, preprocessor):
     new_dash_table = populate_dash_table(cleaned_emails)
 
     return new_dash_table
+
 
 # CALLBACK - Upload Raw Data
 @app.callback(
@@ -364,7 +383,9 @@ def load_preprocessed_csv(contents, filename, date):
     decoded = base64.b64decode(content_string)
     try:
         if "csv" in filename:
-            temp_df = pd.read_csv(io.StringIO(decoded.decode("utf-8")), index_col= False)
+            temp_df = pd.read_csv(io.StringIO(decoded.decode("utf-8")), index_col=False)
+        else:
+            raise Exception
     except Exception as e:
         print(e)
         return html.Div(["There was an error processing this file."])
@@ -387,6 +408,7 @@ def load_preprocessed(list_of_contents, list_of_names, list_of_dates):
     else:
         raise PreventUpdate
 
+
 ############################
 # Append Emails to Unclassified List - Remove Duplicates - Clear Upload Table
 ############################
@@ -402,17 +424,15 @@ def load_preprocessed(list_of_contents, list_of_names, list_of_dates):
     ],
     prevent_initial_call=True,
 )
-def add_csv_to_unclassified_table(
-    clicks, preprocessed_table, unclassified_table
-):
+def add_csv_to_unclassified_table(clicks, preprocessed_table, unclassified_table):
     # if there isnt any uploaded emails don't update
     if preprocessed_table is None:
         raise PreventUpdate
     else:
-        #imported csv converted to dataframe converted to dash_table is wrapped in list - no solution right now, access first item in list first
+        # imported csv converted to dataframe converted to dash_table is wrapped in list - no solution right now, access first item in list first
         preprocessed_table = preprocessed_table[0]
         tempRawDF = pd.DataFrame(preprocessed_table["props"]["data"])
-        
+
         # check if the unclassified table has been generated yet
         if unclassified_table is not None:
             # convert table to dataframe
@@ -429,6 +449,7 @@ def add_csv_to_unclassified_table(
             new_table = populate_dash_table(tempRawDF)
             return new_table, None
 
+
 ############################
 # Clear CSV Upload Table
 ############################
@@ -443,8 +464,6 @@ def clear_csv_output(clicks, data_table):
         raise PreventUpdate
     else:
         return None
-
-
 
 
 ############################
@@ -484,7 +503,7 @@ def cleaned_data_to_file(n_clicks, data_table):
     else:
         # convert data table into a data frame so that it can be converted to a csv file
         tempDF = pd.DataFrame(data_table["props"]["data"])
-        return dcc.send_data_frame(tempDF.to_csv, "cleaned_emails.csv", index = False)
+        return dcc.send_data_frame(tempDF.to_csv, "cleaned_emails.csv", index=False)
 
 
 ############################
@@ -507,6 +526,314 @@ def cleaned_data_to_file(n_clicks, data_table):
 ############################
 # Visualise Processed Emails
 ############################
+# CREATE
+@app.callback(
+    Output("visualisation-dashboard", "children"),
+    Input("output-sentiment", "children"),
+)
+def create_visualisations(data_table):
+    if data_table is None:
+        raise PreventUpdate
+    else:
+        # Get Sentiment Data
+        sentimentDF = pd.DataFrame(data_table["props"]["data"])
+
+        available_years = ["All Years"] + sentimentDF["Year"].unique().tolist()
+
+        children = [
+            html.H1(
+                "Visualization",
+                style={"color": "#0080FF", "font-size": "36px"},
+            ),
+            dcc.Dropdown(
+                id="visualization-dropdown",
+                options=[
+                    {"label": "Word Cloud", "value": "word-cloud"},
+                    {"label": "Network Graph", "value": "network-graph"},
+                    {"label": "Time Series", "value": "time-series"},
+                    {"label": "Tree Map", "value": "tree-map"},
+                    {"label": "Pie Chart", "value": "pie-chart"},
+                ],
+                value="word-cloud",
+            ),
+            dbc.Row(
+                [
+                    dbc.Col(
+                        dcc.Dropdown(
+                            id="year-dropdown",
+                            options=[
+                                {"label": year, "value": year}
+                                for year in available_years
+                            ],
+                            value="All Years",  # Default to "All Years"
+                        )
+                    ),
+                ]
+            ),
+            dcc.Graph(
+                id="visualization-graph",
+                style={
+                    "width": "100%",
+                    "height": "700px",
+                },  # Adjust the height as needed
+            ),
+        ]
+    return children
+
+
+# UPDATE - PARTIALLY WORKING
+@app.callback(
+    Output("visualization-graph", "figure"),
+    Input("visualization-dropdown", "value"),
+    Input("year-dropdown", "value"),
+    State("output-sentiment", "children"),
+)
+def update_visualization(selected_option, selected_year, data_table):
+    if data_table is None:
+        raise PreventUpdate
+    else:
+        sentimentDF = pd.DataFrame(data_table["props"]["data"])
+        # Make a copy
+        sentiDF = sentimentDF
+        # Create DF with a Value
+        sentiDF["Value"] = np.select(
+            [
+                sentiDF["Labelled"] == "Positive",
+                sentiDF["Labelled"] == "Neutral",
+                sentiDF["Labelled"] == "Negative",
+            ],
+            [1, 0, -1],
+        )
+        # Create a DF with Grouped by Year, (SUM)Value
+        sumYearSentiment = sentiDF.groupby("Year")["Value"].sum().reset_index()
+       # sumYearSentiment.columns = ["Year", "Sentiment Value"]
+        
+        filtered_df = sentiDF  # No filtering by year
+        filtered_df_time_series = sumYearSentiment  # # No filtering by year
+        
+        if selected_year != "All Years":
+            filtered_df = sentiDF[sentiDF['Year'] == selected_year]
+            filtered_df_time_series = sumYearSentiment[sumYearSentiment["Year"] == selected_year]
+
+        df_wordCloud = filtered_df["Content"]
+
+        if selected_option == "word-cloud":
+
+            all_text = " ".join(df_wordCloud)
+
+            wordcloud_data = generate_wordcloud(all_text)
+
+            return wordcloud_data
+
+        elif selected_option == "network-graph":
+            # Generate and return a Network Graph visualization
+            network_data = generate_network_graph(filtered_df)
+            return network_data
+        elif selected_option == "time-series":
+            # Generate and return a Time Series visualization
+            time_series_data = generate_time_series(filtered_df_time_series)
+            return time_series_data
+        elif selected_option == "tree-map":
+            # Generate and return a Tree Map visualization
+            tree_map_data = generate_tree_map(filtered_df)
+            return tree_map_data
+        elif selected_option == "pie-chart":
+            # Generate and return a Pie Chart visualization
+            pie_chart_data = generate_pie_chart(filtered_df)
+            return pie_chart_data
+
+# WORKS
+def generate_wordcloud(content):
+    # Generate the word cloud
+    wordcloud = WordCloud(width=2000, height=1200, background_color="white").generate(
+        content
+    )
+
+    # Create a BytesIO buffer to save the word cloud image
+    buffer = io.BytesIO()
+
+    # Save the word cloud image to the buffer
+    plt.figure(figsize=(20, 12))
+    plt.imshow(wordcloud, interpolation="bilinear")
+    plt.axis("off")
+    plt.tight_layout(pad=0)
+    plt.title("Word Cloud")
+    plt.savefig(buffer, format="png")
+    buffer.seek(0)
+
+    # Encode the image as base64
+    wordcloud_base64 = base64.b64encode(buffer.read()).decode()
+
+    return {
+        "data": [
+            {
+                "x": [0],
+                "y": [0],
+                "mode": "text",
+                "text": ["Word Cloud"],
+                "textfont": {"size": 24, "color": "black"},  # Customize text color
+            }
+        ],
+        "layout": {
+            "images": [
+                {
+                    "source": "data:image/png;base64,{}".format(wordcloud_base64),
+                    "x": 0,
+                    "y": 0,
+                    "xref": "x",
+                    "yref": "y",
+                    "sizex": 1,
+                    "sizey": 1,
+                    "xanchor": "center",
+                    "yanchor": "middle",
+                }
+            ],
+            #"width": "auto",
+            #"height": "auto",
+            "xaxis": {"showgrid": False, "showticklabels": False, "zeroline": False},
+            "yaxis": {"showgrid": False, "showticklabels": False, "zeroline": False},
+        },
+    }
+
+
+def generate_network_graph(df):
+    G = nx.DiGraph()
+    for index, row in df.iterrows():
+        if (row["From"] is None):
+            row['From'] = 'N/A'
+        sender = row["From"]
+        if (row['To'] is None):
+            row['To'] = 'N/A'
+        recipients = row["To"].split(", ")
+        G.add_node(sender)
+        for recipient in recipients:
+            G.add_node(recipient)
+            G.add_edge(sender, recipient)
+
+    pos = nx.spring_layout(G, seed=42)
+    edges = G.edges()
+    edge_x = []
+    edge_y = []
+    for edge in edges:
+        x0, y0 = pos[edge[0]]
+        x1, y1 = pos[edge[1]]
+        edge_x.append(x0)
+        edge_x.append(x1)
+        edge_x.append(None)
+        edge_y.append(y0)
+        edge_y.append(y1)
+        edge_y.append(None)
+
+    node_x = []
+    node_y = []
+    for node in G.nodes():
+        x, y = pos[node]
+        node_x.append(x)
+        node_y.append(y)
+
+    edge_trace = go.Scatter(
+        x=edge_x, y=edge_y,
+        line=dict(width=0.5, color='#888'),
+        hoverinfo='none',
+        mode='lines')
+
+    node_trace = go.Scatter(
+        x=node_x, y=node_y,
+        mode='markers',
+        hoverinfo='text',
+        marker=dict(
+            showscale=True,
+            colorscale='YlGnBu',
+            size=10,
+            colorbar=dict(
+                thickness=15,
+                title='Node Connections',
+                xanchor='left',
+                titleside='right'
+            )
+        )
+    )
+
+    node_text = list(G.nodes())
+    node_trace.text = node_text
+
+    fig = go.Figure(data=[edge_trace, node_trace],
+                    layout=go.Layout(
+                        showlegend=False,
+                        hovermode='closest',
+                        margin=dict(b=0, l=0, r=0, t=0)
+                    ))
+    return fig
+
+
+
+def generate_time_series(df):
+    # Sort the DataFrame by 'Date' to ensure it's in the right order for plotting
+    cols=['Year', 'Month', 'Day']
+    df['Date'] = df[cols].apply(lambda x: '-'.join(x.values.astype(str)), axis='columns')
+    df['Date'] = pd.to_datetime(df['Date'], format="%Y-%m-%d")
+    df = df.sort_values(by="Date")
+
+    # Create a new DataFrame for the smoothed curve
+    smooth_df = pd.DataFrame()
+    num_dates = np.linspace(
+        0, 1, len(df)
+    )  # Create a linear space of numerical dates between 0 and 1
+
+    # Create a spline function
+    spline = make_interp_spline(num_dates, df["Value"], k=3)
+
+    # Generate the numerical dates for the smoothed curve
+    num_dates_smooth = np.linspace(
+        0, 1, 100
+    )  # Adjust the number of points (100 in this example)
+
+    # Get the smoothed scores for the numerical dates
+    scores_smooth = spline(num_dates_smooth)
+
+    # Convert numerical dates back to actual dates
+    smooth_dates = df["Date"].min() + pd.to_timedelta(
+        num_dates_smooth * (df["Date"].max() - df["Date"].min())
+    )
+
+    smooth_df["Date"] = smooth_dates
+    smooth_df["Value"] = scores_smooth
+
+    fig = px.scatter(df, x="Date", y="Value", title="Score by Date")
+
+    # Add the smoothed curve
+    fig.add_scatter(
+        x=smooth_df["Date"], y=smooth_df["Value"], mode="lines", name="Smoothed Curve"
+    )
+
+    return fig
+
+
+def generate_tree_map(df):
+    # Create a Tree Map for the selected year
+    tree_map_fig = px.treemap(df, path=["Year", "Labelled"], color="Labelled")
+    return tree_map_fig
+
+
+def generate_pie_chart(data_frame):
+    # Generate and return a Pie Chart visualization
+    label_counts = data_frame["Labelled"].value_counts()
+
+    labels = label_counts.index
+    values = label_counts.values
+
+    pie_chart_data = {
+        "data": [
+            {
+                "type": "pie",
+                "labels": labels,
+                "values": values,
+            }
+        ],
+        "layout": {"title": "Distribution of Labels"},
+    }
+    return pie_chart_data
+
 
 ############################
 # INIT -> RUNS THE PROGRAM #
