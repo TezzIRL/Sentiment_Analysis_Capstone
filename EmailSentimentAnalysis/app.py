@@ -97,12 +97,25 @@ app.layout = dbc.Tabs(
                         html.Div(
                             [
                                 html.Button(
+                                    "Add Cleaned Emails to the Unclassified List",
+                                    id="btn-add-to-unclassified-table",
+                                    style={"margin-right": "10px"},
+                                ),
+                                html.Button(
+                                    "Discard Emails",
+                                    id="btn-clear-raw-output",
+                                    style={"margin-right": "10px"},
+                                ),
+                                html.Button(
                                     "Download Cleaned Data",
                                     id="btn-download-cleaned",
                                 ),
                                 dcc.Download(id="download-cleaned-csv"),
                             ],
-                            style={"margin-bottom": "10px"},
+                            style={
+                                "margin-bottom": "10px",
+                                "margin-left": "10px",
+                            },
                         ),
                         html.Div(id="output-cleaned-raw"),
                     ],
