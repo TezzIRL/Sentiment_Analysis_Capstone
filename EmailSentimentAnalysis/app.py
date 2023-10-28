@@ -629,7 +629,7 @@ def update_visualization(selected_option, selected_year, data_table):
             return network_data
         elif selected_option == "time-series":
             # Generate and return a Time Series visualization
-            time_series_data = generate_time_series(filtered_df_time_series)
+            time_series_data = generate_time_series(filtered_df)
             return time_series_data
         elif selected_option == "tree-map":
             # Generate and return a Tree Map visualization
@@ -637,7 +637,7 @@ def update_visualization(selected_option, selected_year, data_table):
             return tree_map_data
         elif selected_option == "pie-chart":
             # Generate and return a Pie Chart visualization
-            pie_chart_data = generate_pie_chart()
+            pie_chart_data = generate_pie_chart(filtered_df)
             return pie_chart_data
 
 # WORKS
@@ -697,26 +697,14 @@ def generate_wordcloud(content):
 def generate_network_graph(data_frame):
     # Generate Network Graph data here
     # Generate and return a Pie Chart visualization
-    label_counts = data_frame["Labelled"].value_counts()
-
-    labels = label_counts.index
-    values = label_counts.values
-
-    pie_chart_data = {
-        "data": [
-            {
-                "type": "pie",
-                "labels": labels,
-                "values": values,
-            }
-        ],
-        "layout": {"title": "Distribution of Labels"},
-    }
-    return pie_chart_data
+    raise PreventUpdate
 
 
 def generate_time_series(df):
     # Sort the DataFrame by 'Date' to ensure it's in the right order for plotting
+    cols=['Year', 'Month', 'Day']
+    df['Date'] = df[cols].apply(lambda x: '-'.join(x.values.astype(str)), axis='columns')
+    df['Date'] = pd.to_datetime(df['Date'], format="%Y-%m-%d")
     df = df.sort_values(by="Date")
 
     # Create a new DataFrame for the smoothed curve
@@ -726,7 +714,7 @@ def generate_time_series(df):
     )  # Create a linear space of numerical dates between 0 and 1
 
     # Create a spline function
-    spline = make_interp_spline(num_dates, df["score"], k=3)
+    spline = make_interp_spline(num_dates, df["Value"], k=3)
 
     # Generate the numerical dates for the smoothed curve
     num_dates_smooth = np.linspace(
@@ -742,13 +730,13 @@ def generate_time_series(df):
     )
 
     smooth_df["Date"] = smooth_dates
-    smooth_df["score"] = scores_smooth
+    smooth_df["Value"] = scores_smooth
 
-    fig = px.scatter(df, x="Date", y="score", title="Score by Date")
+    fig = px.scatter(df, x="Date", y="Value", title="Score by Date")
 
     # Add the smoothed curve
     fig.add_scatter(
-        x=smooth_df["Date"], y=smooth_df["score"], mode="lines", name="Smoothed Curve"
+        x=smooth_df["Date"], y=smooth_df["Value"], mode="lines", name="Smoothed Curve"
     )
 
     return fig
@@ -756,14 +744,13 @@ def generate_time_series(df):
 
 def generate_tree_map(df):
     # Create a Tree Map for the selected year
-    tree_map_fig = px.treemap(df, path=["Year", "Label"], color="Label")
+    tree_map_fig = px.treemap(df, path=["Year", "Labelled"], color="Labelled")
     return tree_map_fig
 
 
-def generate_pie_chart():
+def generate_pie_chart(data_frame):
     # Generate and return a Pie Chart visualization
-    df = pd.read_csv("master_date_score.csv")  # Replace with dataset file
-    label_counts = df["label"].value_counts()
+    label_counts = data_frame["Labelled"].value_counts()
 
     labels = label_counts.index
     values = label_counts.values
