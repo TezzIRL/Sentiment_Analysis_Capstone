@@ -1,9 +1,3 @@
 # Handles ESA Module Importing as a Package
-import ESA_DatasetBuilder
-import ESA_Exporter
-import ESA_Interface
-import ESA_PreprocessedEmailAccess
-import ESA_ProcessedEmailAccess
-import ESA_RawEmailAccess
-import ESA_SentimentProcessor
-import ESA_Visualiser
+from .ESA_RawEmailAccess import *
+from .ESA_SentimentProcessor import *
