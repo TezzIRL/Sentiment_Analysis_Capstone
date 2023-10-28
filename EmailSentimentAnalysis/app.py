@@ -617,7 +617,6 @@ def update_visualization(selected_option, selected_year, data_table):
         df_wordCloud = sentimentDF["Content"]
 
         if selected_option == "word-cloud":
-            df_wordCloud = df_wordCloud.apply(str_text)
 
             all_text = " ".join(df_wordCloud)
 
@@ -627,7 +626,7 @@ def update_visualization(selected_option, selected_year, data_table):
 
         elif selected_option == "network-graph":
             # Generate and return a Network Graph visualization
-            network_data = generate_network_graph()
+            network_data = generate_network_graph(sentiDF)
             return network_data
         elif selected_option == "time-series":
             # Generate and return a Time Series visualization
@@ -641,11 +640,6 @@ def update_visualization(selected_option, selected_year, data_table):
             # Generate and return a Pie Chart visualization
             pie_chart_data = generate_pie_chart()
             return pie_chart_data
-
-# HAVENT CHECKED - PROBABLY WRONG
-def str_text(text):
-    text = str(text)
-    return text
 
 # WORKS
 def generate_wordcloud(content):
@@ -701,11 +695,10 @@ def generate_wordcloud(content):
     }
 
 
-def generate_network_graph():
+def generate_network_graph(data_frame):
     # Generate Network Graph data here
     # Generate and return a Pie Chart visualization
-    df = pd.read_csv("master_date_score.csv")  # Replace with your dataset file
-    label_counts = df["label"].value_counts()
+    label_counts = data_frame["Labelled"].value_counts()
 
     labels = label_counts.index
     values = label_counts.values
