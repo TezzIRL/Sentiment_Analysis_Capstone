@@ -531,11 +531,10 @@ def create_visualisations(data_table):
     if data_table is None:
         raise PreventUpdate
     else:
-        print("Visuals are GO")
         # Get Sentiment Data
         sentimentDF = pd.DataFrame(data_table["props"]["data"])
-        
-        available_years = ['All Years'] + sentimentDF['Year'].unique().tolist()
+
+        available_years = ["All Years"] + sentimentDF["Year"].unique().tolist()
 
         children = [
             html.H1(
@@ -580,55 +579,65 @@ def create_visualisations(data_table):
 
 # UPDATE - NOT WORKING
 @app.callback(
-    [
-        Output("visualization-graph", "figure"),
-    ],
-    [
-        Input("visualization-dropdown", "value"),
-        Input("year-dropdown", "value"),
-        State("output-sentiment", "children"),
-    ],
+    Output("visualization-graph", "figure"),
+    Input("visualization-dropdown", "value"),
+    Input("year-dropdown", "value"),
+    State("output-sentiment", "children"),
 )
 def update_visualization(selected_option, selected_year, data_table):
     if data_table is None:
         raise PreventUpdate
     else:
         sentimentDF = pd.DataFrame(data_table["props"]["data"])
-        raise PreventUpdate
-        # if selected_year == "All Years":
-        #     filtered_df = df  # No filtering by year
-        #     filtered_df_time_serie = df_time_serie  # # No filtering by year
+        # Make a copy
+        sentiDF = sentimentDF
+        # Create DF with a Value
+        sentiDF["Value"] = np.select(
+            [
+                sentiDF["Labelled"] == "Positive",
+                sentiDF["Labelled"] == "Neutral",
+                sentiDF["Labelled"] == "Negative",
+            ],
+            [1, 0, -1],
+        )
+        # Create a DF with Grouped by Year, (SUM)Value
+        sumYearSentiment = sentiDF.groupby("Year")["Value"].sum()
+        sumYearSentiment.columns = ["Year", "Sentiment Value"]
+
+        if selected_year == "All Years":
+            filtered_df = sentiDF  # No filtering by year
+            filtered_df_time_serie = sumYearSentiment  # # No filtering by year
         # else:
-        #     filtered_df = df[df["Year"] == selected_year]
-        #     filtered_df_time_serie = df_time_serie[
-        #         df_time_serie["Date"].dt.year == selected_year
-        #     ]
+        # filtered_df = sentiDF[sentiDF["Year"] == selected_year]
+        # filtered_df_time_serie = sumYearSentiment[sumYearSentiment["Year"] == selected_year]
 
-        # if selected_option == "word-cloud":
-        #     df_wordCloud["Text"] = df_wordCloud["Text"].apply(str_text)
+        df_wordCloud = sentimentDF["Content"]
 
-        #     all_text = " ".join(df_wordCloud["Text"])
+        if selected_option == "word-cloud":
+            df_wordCloud = df_wordCloud.apply(str_text)
 
-        #     wordcloud_data = generate_wordcloud(all_text)
+            all_text = " ".join(df_wordCloud)
 
-        #     return wordcloud_data
+            wordcloud_data = generate_wordcloud(all_text)
 
-        # elif selected_option == "network-graph":
-        #     # Generate and return a Network Graph visualization
-        #     network_data = generate_network_graph()
-        #     return network_data
-        # elif selected_option == "time-series":
-        #     # Generate and return a Time Series visualization
-        #     time_series_data = generate_time_series(filtered_df_time_serie)
-        #     return time_series_data
-        # elif selected_option == "tree-map":
-        #     # Generate and return a Tree Map visualization
-        #     tree_map_data = generate_tree_map(filtered_df)
-        #     return tree_map_data
-        # elif selected_option == "pie-chart":
-        #     # Generate and return a Pie Chart visualization
-        #     pie_chart_data = generate_pie_chart()
-        #     return pie_chart_data
+            return wordcloud_data
+
+        elif selected_option == "network-graph":
+            # Generate and return a Network Graph visualization
+            network_data = generate_network_graph()
+            return network_data
+        elif selected_option == "time-series":
+            # Generate and return a Time Series visualization
+            time_series_data = generate_time_series(filtered_df_time_serie)
+            return time_series_data
+        elif selected_option == "tree-map":
+            # Generate and return a Tree Map visualization
+            tree_map_data = generate_tree_map(filtered_df)
+            return tree_map_data
+        elif selected_option == "pie-chart":
+            # Generate and return a Pie Chart visualization
+            pie_chart_data = generate_pie_chart()
+            return pie_chart_data
 
 
 def str_text(text):
@@ -638,7 +647,7 @@ def str_text(text):
 
 def generate_wordcloud(content):
     # Generate the word cloud
-    wordcloud = WordCloud(width=1000, height=600, background_color="white").generate(
+    wordcloud = WordCloud(width=2000, height=1200, background_color="white").generate(
         content
     )
 
@@ -646,9 +655,10 @@ def generate_wordcloud(content):
     buffer = io.BytesIO()
 
     # Save the word cloud image to the buffer
-    plt.figure(figsize=(10, 5))
+    plt.figure(figsize=(20, 12))
     plt.imshow(wordcloud, interpolation="bilinear")
     plt.axis("off")
+    plt.tight_layout(pad=0)
     plt.title("Word Cloud")
     plt.savefig(buffer, format="png")
     buffer.seek(0)
@@ -680,8 +690,8 @@ def generate_wordcloud(content):
                     "yanchor": "middle",
                 }
             ],
-            "width": 1000,
-            "height": 600,
+            #"width": "auto",
+            #"height": "auto",
             "xaxis": {"showgrid": False, "showticklabels": False, "zeroline": False},
             "yaxis": {"showgrid": False, "showticklabels": False, "zeroline": False},
         },
