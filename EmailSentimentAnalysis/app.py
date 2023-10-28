@@ -154,7 +154,7 @@ app.layout = dbc.Tabs(
                                 "margin": "10px",
                             },
                         ),
-                        html.Div(id="output-preprocessed-upload"),
+                        html.Div(id="output-preprocessed-data"),
                     ],
                     className="tab-content",
                     style={
@@ -221,50 +221,6 @@ app.layout = dbc.Tabs(
 
 
 # # Parsing Content for Uploading Email Data - Not Good Code - CodeDebt - FIX!!!
-# def load_preprocessed_csv(contents, filename, date):
-#     content_type, content_string = contents.split(",")
-
-#     decoded = base64.b64decode(content_string)
-#     try:
-#         if "csv" in filename:
-#             temp_df = pd.read_csv(io.StringIO(decoded.decode("utf-8")))
-
-#             if cleaned_emails.empty:
-#                 cleaned_emails = temp_df
-#             else:
-#                 cleaned_emails.append(temp_df)
-#     except Exception as e:
-#         print(e)
-#         return html.Div(["There was an error processing this file."])
-
-#     return html.Div(
-#         [
-#             dash_table.DataTable(
-#                 # data=email_preprocessor.get_dataframe().to_dict("records"),
-#                 data=cleaned_emails.to_dict("records"),
-#                 columns=[{"name": i, "id": i} for i in cleaned_emails.columns],
-#                 style_data={
-#                     "whiteSpace": "normal",
-#                     "height": "auto",
-#                 },
-#                 fill_width=False,
-#             ),
-#         ]
-#     )
-
-
-# @app.callback(
-#     Output(component_id="output-preprocessed-upload", component_property="children"),
-#     Input("upload-preprocessed-data", "contents"),
-#     State("upload-preprocessed-data", "filename"),
-#     State("upload-preprocessed-data", "last_modified"),
-# )
-# def update_output(list_of_contents, list_of_names, list_of_dates):
-#     if list_of_contents is not None:
-#         children = [
-#             load_preprocessed_csv(list_of_contents, list_of_names, list_of_dates)
-#         ]
-#         return children
 
 # Converts a dataframe object into a data table
 def populate_dash_table(dataframe):
@@ -385,14 +341,42 @@ def add_cleaned_emails_to_unclassified_table(clicks, raw_email_data_table, uncla
     prevent_initial_call=True)
 def clear_raw_email_output(clicks, data_table):
     if (data_table is None):
-        PreventUpdate
+        raise PreventUpdate
     else:
         return None
     
 ############################
 # Upload Cleaned Email CSV - Append - Display
 ############################
+def load_preprocessed_csv(contents, filename, date):
+    content_type, content_string = contents.split(",")
 
+    decoded = base64.b64decode(content_string)
+    temp_df = ""
+    try:
+        if "csv" in filename:
+            temp_df = pd.read_csv(io.StringIO(decoded.decode("utf-8")))
+    except Exception as e:
+        print(e)
+        return html.Div(["There was an error processing this file."])
+    dash_table = populate_dash_table(temp_df)
+    return dash_table
+
+
+@app.callback(
+    Output(component_id="output-preprocessed-data", component_property="children"),
+    Input("upload-preprocessed-data", "contents"),
+    State("upload-preprocessed-data", "filename"),
+    State("upload-preprocessed-data", "last_modified"),
+)
+def load_preprocessed(list_of_contents, list_of_names, list_of_dates):
+    if list_of_contents is not None:
+        children = [
+            load_preprocessed_csv(list_of_contents, list_of_names, list_of_dates)
+        ]
+        return children
+    else:
+        raise PreventUpdate
 
 ############################
 # Grab from Table -> Classify -> Display
@@ -405,7 +389,7 @@ def clear_raw_email_output(clicks, data_table):
 )
 def display_classified(mouse_clicks, data_table):
     if data_table is None:
-        PreventUpdate
+        raise PreventUpdate
     else:
         tempDF = pd.DataFrame(data_table["props"]["data"])
         classifier = Sentiment_Classifier()
@@ -417,8 +401,6 @@ def display_classified(mouse_clicks, data_table):
 ############################
 # Download Classified Emails to CSV
 ############################
-
-
 # @app.callback(
 #     Output("download-processed-data-csv", "data"),
 #     Input("export-processed-button", "n_clicks"),
