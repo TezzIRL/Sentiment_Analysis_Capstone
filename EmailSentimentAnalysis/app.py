@@ -69,12 +69,12 @@ app.layout = dbc.Tabs(
             ],
         ),
         dbc.Tab(
-            label="Load and Preprocess",
+            label="Load Raw Emails",
             children=[
                 html.Div(
                     [
                         html.H1(
-                            "Load and Preprocess",
+                            "Load Raw Emails",
                             style={"color": "#0080FF", "font-size": "36px"},
                         ),
                         dcc.Upload(
@@ -98,20 +98,15 @@ app.layout = dbc.Tabs(
                         html.Div(
                             [
                                 html.Button(
-                                    "Add Cleaned Emails to the Unclassified List",
+                                    "Add to the Unclassified List",
                                     id="btn-add-to-unclassified-table",
                                     style={"margin-right": "10px"},
                                 ),
                                 html.Button(
-                                    "Discard Emails",
+                                    "Discard",
                                     id="btn-clear-raw-output",
                                     style={"margin-right": "10px"},
                                 ),
-                                html.Button(
-                                    "Download Cleaned Data",
-                                    id="btn-download-cleaned",
-                                ),
-                                dcc.Download(id="download-cleaned-csv"),
                             ],
                             style={
                                 "margin-bottom": "10px",
@@ -154,6 +149,24 @@ app.layout = dbc.Tabs(
                                 "margin": "10px",
                             },
                         ),
+                        html.Div(
+                            [
+                                html.Button(
+                                    "Add to the Unclassified List",
+                                    id="btn-csv-to-unclassified",
+                                    style={"margin-right": "10px"},
+                                ),
+                                html.Button(
+                                    "Discard",
+                                    id="btn-clear-csv",
+                                    style={"margin-right": "10px"},
+                                ),
+                            ],
+                            style={
+                                "margin-bottom": "10px",
+                                "margin-left": "10px",
+                            },
+                        ),
                         html.Div(id="output-preprocessed-data"),
                     ],
                     className="tab-content",
@@ -191,7 +204,7 @@ app.layout = dbc.Tabs(
             ],
         ),
         dbc.Tab(
-            label="Export Processed Emails",
+            label="Export",
             children=[
                 html.Div(
                     [
@@ -200,11 +213,17 @@ app.layout = dbc.Tabs(
                             style={"color": "#0080FF", "font-size": "36px"},
                         ),
                         html.Button(
+                            "Export Cleaned Email Data",
+                            id="btn-download-cleaned",
+                            style={"margin-right": "10px"},
+                        ),
+                        dcc.Download(id="download-cleaned-csv"),
+                        html.Button(
                             "Export Processed Data",
-                            id="export-processed-button",
+                            id="btn-export-processed",
                         ),
                         # Add more content for this scenario
-                        dcc.Download(id="download-processed-data-csv"),
+                        dcc.Download(id="download-processed-csv"),
                         # Add more content for this scenario
                     ],
                     className="tab-content",
@@ -222,6 +241,7 @@ app.layout = dbc.Tabs(
 
 # # Parsing Content for Uploading Email Data - Not Good Code - CodeDebt - FIX!!!
 
+
 # Converts a dataframe object into a data table
 def populate_dash_table(dataframe):
     return dash_table.DataTable(
@@ -235,10 +255,10 @@ def populate_dash_table(dataframe):
         fill_width=True,
     )
 
+
 ############################
 # Upload Raw Emails - Clean - Append - Display
 ############################
-
 # Parsing Content for Uploading Email Data - Not Good Code - CodeDebt - FIX!!!
 def parse_raw_email_contents(contents, filename, date, preprocessor):
     # split content into type and content
@@ -261,7 +281,6 @@ def parse_raw_email_contents(contents, filename, date, preprocessor):
 
     return new_dash_table
 
-
 # CALLBACK - Upload Raw Data
 @app.callback(
     Output(component_id="output-cleaned-raw", component_property="children"),
@@ -279,44 +298,32 @@ def update_raw_email_output(list_of_contents, list_of_names, list_of_dates):
         # return only the last data table
         return children[-1]
 
-############################
-# Download Cleaned Emails to CSV
-############################
-
-# - WORKS
-@app.callback(
-    Output("download-cleaned-csv", "data"),
-    Input("btn-download-cleaned", "n_clicks"),
-    State("output-cleaned-raw", "children"),
-    prevent_initial_call=True,
-)
-def cleaned_data_to_file(n_clicks, data_table):
-    # if data_table is none, prevent return
-    if (data_table is None):
-        raise PreventUpdate
-    else:
-        # convert data table into a data frame so that it can be converted to a csv file
-        tempDF = pd.DataFrame(data_table["props"]["data"])
-        return dcc.send_data_frame(tempDF.to_csv, "cleaned_emails.csv")
 
 ############################
 # Append Emails to Unclassified List - Remove Duplicates - Clear Upload Table
 ############################
-@app.callback([
-    Output('table-unclassified-email', 'children'),
-    Output('output-cleaned-raw', 'children', allow_duplicate=True)
-], [Input('btn-add-to-unclassified-table', 'n_clicks'),
-    State("output-cleaned-raw", "children"),
-    State("table-unclassified-email", "children")],
-              prevent_initial_call=True)
-def add_cleaned_emails_to_unclassified_table(clicks, raw_email_data_table, unclassified_table):
+@app.callback(
+    [
+        Output("table-unclassified-email", "children"),
+        Output("output-cleaned-raw", "children", allow_duplicate=True),
+    ],
+    [
+        Input("btn-add-to-unclassified-table", "n_clicks"),
+        State("output-cleaned-raw", "children"),
+        State("table-unclassified-email", "children"),
+    ],
+    prevent_initial_call=True,
+)
+def add_cleaned_emails_to_unclassified_table(
+    clicks, raw_email_data_table, unclassified_table
+):
     # if there isnt any uploaded emails don't update
-    if(raw_email_data_table is None):
+    if raw_email_data_table is None:
         raise PreventUpdate
     else:
         tempRawDF = pd.DataFrame(raw_email_data_table["props"]["data"])
         # check if the unclassified table has been generated yet
-        if (unclassified_table is not None):
+        if unclassified_table is not None:
             # convert table to dataframe
             tempUnclassifiedDF = pd.DataFrame(unclassified_table["props"]["data"])
             # concat the unclassified dataframe with the raw email dataframe
@@ -330,21 +337,24 @@ def add_cleaned_emails_to_unclassified_table(clicks, raw_email_data_table, uncla
         else:
             new_table = populate_dash_table(tempRawDF)
             return new_table, None
-        
+
+
 ############################
 # Clear Upload Table
 ############################
 @app.callback(
-    Output('output-cleaned-raw', 'children', allow_duplicate=True),
-    Input('btn-clear-raw-output', 'n_clicks'),
-    State('output-cleaned-raw', 'children'),
-    prevent_initial_call=True)
+    Output("output-cleaned-raw", "children", allow_duplicate=True),
+    Input("btn-clear-raw-output", "n_clicks"),
+    State("output-cleaned-raw", "children"),
+    prevent_initial_call=True,
+)
 def clear_raw_email_output(clicks, data_table):
-    if (data_table is None):
+    if data_table is None:
         raise PreventUpdate
     else:
         return None
-    
+
+
 ############################
 # Upload Cleaned Email CSV - Append - Display
 ############################
@@ -352,10 +362,9 @@ def load_preprocessed_csv(contents, filename, date):
     content_type, content_string = contents.split(",")
 
     decoded = base64.b64decode(content_string)
-    temp_df = ""
     try:
         if "csv" in filename:
-            temp_df = pd.read_csv(io.StringIO(decoded.decode("utf-8")))
+            temp_df = pd.read_csv(io.StringIO(decoded.decode("utf-8")), index_col= False)
     except Exception as e:
         print(e)
         return html.Div(["There was an error processing this file."])
@@ -379,6 +388,66 @@ def load_preprocessed(list_of_contents, list_of_names, list_of_dates):
         raise PreventUpdate
 
 ############################
+# Append Emails to Unclassified List - Remove Duplicates - Clear Upload Table
+############################
+@app.callback(
+    [
+        Output("table-unclassified-email", "children", allow_duplicate=True),
+        Output("output-preprocessed-data", "children", allow_duplicate=True),
+    ],
+    [
+        Input("btn-csv-to-unclassified", "n_clicks"),
+        State("output-preprocessed-data", "children"),
+        State("table-unclassified-email", "children"),
+    ],
+    prevent_initial_call=True,
+)
+def add_csv_to_unclassified_table(
+    clicks, preprocessed_table, unclassified_table
+):
+    # if there isnt any uploaded emails don't update
+    if preprocessed_table is None:
+        raise PreventUpdate
+    else:
+        #imported csv converted to dataframe converted to dash_table is wrapped in list - no solution right now, access first item in list first
+        preprocessed_table = preprocessed_table[0]
+        tempRawDF = pd.DataFrame(preprocessed_table["props"]["data"])
+        
+        # check if the unclassified table has been generated yet
+        if unclassified_table is not None:
+            # convert table to dataframe
+            tempUnclassifiedDF = pd.DataFrame(unclassified_table["props"]["data"])
+            # concat the unclassified dataframe with the raw email dataframe
+            unifiedDF = pd.concat([tempUnclassifiedDF, tempRawDF])
+            # remove any duplicates that may have been included
+            unifiedNoDupDF = unifiedDF.drop_duplicates()
+            # convert dataframe back into a dash table
+            unified_table = populate_dash_table(unifiedNoDupDF)
+            # return unified table and none (removes the upload table)
+            return unified_table, None
+        else:
+            new_table = populate_dash_table(tempRawDF)
+            return new_table, None
+
+############################
+# Clear CSV Upload Table
+############################
+@app.callback(
+    Output("output-preprocessed-data", "children", allow_duplicate=True),
+    Input("btn-clear-csv", "n_clicks"),
+    State("output-preprocessed-data", "children"),
+    prevent_initial_call=True,
+)
+def clear_csv_output(clicks, data_table):
+    if data_table is None:
+        raise PreventUpdate
+    else:
+        return None
+
+
+
+
+############################
 # Grab from Table -> Classify -> Display
 ############################
 @app.callback(
@@ -399,18 +468,40 @@ def display_classified(mouse_clicks, data_table):
 
 
 ############################
+# Download Cleaned Emails to CSV
+############################
+# - WORKS
+@app.callback(
+    Output("download-cleaned-csv", "data"),
+    Input("btn-download-cleaned", "n_clicks"),
+    State("table-unclassified-email", "children"),
+    prevent_initial_call=True,
+)
+def cleaned_data_to_file(n_clicks, data_table):
+    # if data_table is none, prevent return
+    if data_table is None:
+        raise PreventUpdate
+    else:
+        # convert data table into a data frame so that it can be converted to a csv file
+        tempDF = pd.DataFrame(data_table["props"]["data"])
+        return dcc.send_data_frame(tempDF.to_csv, "cleaned_emails.csv", index = False)
+
+
+############################
 # Download Classified Emails to CSV
 ############################
-# @app.callback(
-#     Output("download-processed-data-csv", "data"),
-#     Input("export-processed-button", "n_clicks"),
-#     State("output-sentiment", "children"),
-#     prevent_initial_call=True,
-# )
-# def cleaned_data_to_file(n_clicks, content):
-#     print(content)
-#     tempDF = pd.DataFrame(content["props"]["data"])
-#     return dcc.send_data_frame(tempDF.to_csv, "sentiment_classified_emails.csv")
+@app.callback(
+    Output("download-processed-csv", "data"),
+    Input("btn-export-processed", "n_clicks"),
+    State("output-sentiment", "children"),
+    prevent_initial_call=True,
+)
+def cleaned_data_to_file(n_clicks, data_table):
+    if data_table is None:
+        raise PreventUpdate
+    else:
+        tempDF = pd.DataFrame(data_table["props"]["data"])
+        return dcc.send_data_frame(tempDF.to_csv, "sentiment_classified_emails.csv")
 
 
 ############################
