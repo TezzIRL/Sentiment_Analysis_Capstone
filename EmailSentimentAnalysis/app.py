@@ -34,6 +34,8 @@ import matplotlib.pyplot as plt
 from wordcloud import WordCloud
 from scipy.interpolate import make_interp_spline
 import numpy as np
+import networkx as nx
+import plotly.graph_objs as go
 
 webbrowser.get().open("http://127.0.0.1:8050")
 
@@ -629,7 +631,7 @@ def update_visualization(selected_option, selected_year, data_table):
             return network_data
         elif selected_option == "time-series":
             # Generate and return a Time Series visualization
-            time_series_data = generate_time_series(filtered_df)
+            time_series_data = generate_time_series(filtered_df_time_series)
             return time_series_data
         elif selected_option == "tree-map":
             # Generate and return a Tree Map visualization
@@ -694,10 +696,75 @@ def generate_wordcloud(content):
     }
 
 
-def generate_network_graph(data_frame):
-    # Generate Network Graph data here
-    # Generate and return a Pie Chart visualization
-    raise PreventUpdate
+def generate_network_graph(df):
+    G = nx.DiGraph()
+    for index, row in df.iterrows():
+        if (row["From"] is None):
+            row['From'] = 'N/A'
+        sender = row["From"]
+        if (row['To'] is None):
+            row['To'] = 'N/A'
+        recipients = row["To"].split(", ")
+        G.add_node(sender)
+        for recipient in recipients:
+            G.add_node(recipient)
+            G.add_edge(sender, recipient)
+
+    pos = nx.spring_layout(G, seed=42)
+    edges = G.edges()
+    edge_x = []
+    edge_y = []
+    for edge in edges:
+        x0, y0 = pos[edge[0]]
+        x1, y1 = pos[edge[1]]
+        edge_x.append(x0)
+        edge_x.append(x1)
+        edge_x.append(None)
+        edge_y.append(y0)
+        edge_y.append(y1)
+        edge_y.append(None)
+
+    node_x = []
+    node_y = []
+    for node in G.nodes():
+        x, y = pos[node]
+        node_x.append(x)
+        node_y.append(y)
+
+    edge_trace = go.Scatter(
+        x=edge_x, y=edge_y,
+        line=dict(width=0.5, color='#888'),
+        hoverinfo='none',
+        mode='lines')
+
+    node_trace = go.Scatter(
+        x=node_x, y=node_y,
+        mode='markers',
+        hoverinfo='text',
+        marker=dict(
+            showscale=True,
+            colorscale='YlGnBu',
+            size=10,
+            colorbar=dict(
+                thickness=15,
+                title='Node Connections',
+                xanchor='left',
+                titleside='right'
+            )
+        )
+    )
+
+    node_text = list(G.nodes())
+    node_trace.text = node_text
+
+    fig = go.Figure(data=[edge_trace, node_trace],
+                    layout=go.Layout(
+                        showlegend=False,
+                        hovermode='closest',
+                        margin=dict(b=0, l=0, r=0, t=0)
+                    ))
+    return fig
+
 
 
 def generate_time_series(df):
