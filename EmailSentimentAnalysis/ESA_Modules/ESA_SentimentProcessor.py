@@ -5,7 +5,6 @@ from pathlib import Path
 
 class Sentiment_Classifier:
     def __init__(self):
-        #self.__clf = joblib.load("/Gridsearched Linear-SVM.joblib")
         self.__clf = L_SVM()
         self.__check_for_saved_model('LinearCLF.joblib')
         self.__classified_list = [[]]
@@ -34,10 +33,3 @@ class Sentiment_Classifier:
         predicted = self.__clf.predict(tempDF["Content"])
         tempDF["Labelled"] = predicted
         return tempDF 
-
-    def Get_Classified(self):
-        return pd.DataFrame(self.__classified_list)
-    
-    def Get_Unprocessed_Data(self):
-        return pd.DataFrame(self.__cleaned_data_to_process)
-        
