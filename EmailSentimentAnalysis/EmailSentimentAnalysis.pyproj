@@ -23,6 +23,7 @@
   </PropertyGroup>
   <ItemGroup>
     <Compile Include="app.py" />
+    <Compile Include="ESA_Modules\Linear_SVM_Model.py" />
     <Compile Include="ESA_Modules\ESA_RawEmailAccess.py" />
     <Compile Include="ESA_Modules\ESA_SentimentProcessor.py" />
     <Compile Include="ESA_Modules\__init__.py" />
@@ -42,8 +43,7 @@
     </Interpreter>
   </ItemGroup>
   <ItemGroup>
-    <Content Include="4763.csv" />
-    <Content Include="Gridsearched Linear-SVM.joblib" />
+    <Content Include="ESA_Modules\4763_oversampled.csv" />
   </ItemGroup>
   <Import Project="$(MSBuildExtensionsPath32)\Microsoft\VisualStudio\v$(VisualStudioVersion)\Python Tools\Microsoft.PythonTools.targets" />
   <!-- Uncomment the CoreCompile target to enable the Build command in

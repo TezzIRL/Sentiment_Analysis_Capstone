@@ -37,6 +37,11 @@ import numpy as np
 import networkx as nx
 import plotly.graph_objs as go
 
+from pathlib import Path
+
+
+
+
 webbrowser.get().open("http://127.0.0.1:8050")
 
 # custom font
@@ -632,7 +637,7 @@ def update_visualization(selected_option, selected_year, data_table):
             return network_data
         elif selected_option == "time-series":
             # Generate and return a Time Series visualization
-            time_series_data = generate_time_series(filtered_df_time_series)
+            time_series_data = generate_time_series(filtered_df)
             return time_series_data
         elif selected_option == "tree-map":
             # Generate and return a Tree Map visualization
@@ -696,7 +701,6 @@ def generate_wordcloud(content):
         },
     }
 
-# works
 def generate_network_graph(df):
     G = nx.DiGraph()
     for index, row in df.iterrows():
@@ -766,12 +770,11 @@ def generate_network_graph(df):
                     ))
     return fig
 
-
-
 def generate_time_series(df):
     # Sort the DataFrame by 'Date' to ensure it's in the right order for plotting
     cols=['Year', 'Month', 'Day']
     df['Date'] = df[cols].apply(lambda x: '-'.join(x.values.astype(str)), axis='columns')
+    
     df['Date'] = pd.to_datetime(df['Date'], format="%Y-%m-%d")
     df_sum = df.groupby('Date')['Value'].sum().reset_index()
     df_sum = df_sum.sort_values(by="Date")
@@ -800,8 +803,14 @@ def generate_time_series(df):
             num_dates_smooth * (df_sum["Date"].max() - df_sum["Date"].min())
         )
 
-        smooth_df["Date"] = smooth_dates
-        smooth_df["Value"] = scores_smooth
+    # Convert numerical dates back to actual dates
+    smooth_dates = df["Date"].min() + np.array(pd.to_timedelta(
+        num_dates_smooth * (df["Date"].max() - df["Date"].min()))
+    )
+
+    smooth_df["Date"] = smooth_dates
+    smooth_df["Value"] = scores_smooth
+
 
     fig = px.scatter(df_sum, x="Date", y="Value", title="Score by Date")
     
@@ -812,7 +821,6 @@ def generate_time_series(df):
         )
 
     return fig
-
 
 def generate_tree_map(df):
     company_list = []

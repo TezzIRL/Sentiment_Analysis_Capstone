@@ -1,32 +1,35 @@
 # This file will contain all logic for the class Sentiment Processor
 import pandas as pd
-import csv
-from sklearn.feature_extraction.text import CountVectorizer
-from sklearn.feature_extraction.text import TfidfTransformer
-from sklearn.svm import LinearSVC
-from sklearn.model_selection import GridSearchCV
-from sklearn.feature_extraction.text import CountVectorizer, TfidfTransformer
-
-from sklearn.pipeline import Pipeline
-
-import joblib
+from .Linear_SVM_Model import L_SVM
+from pathlib import Path
 
 class Sentiment_Classifier:
     def __init__(self):
-        self.__clf = joblib.load('EmailSentimentAnalysis\Gridsearched Linear-SVM.joblib')
+        self.__clf = L_SVM()
+        self.__check_for_saved_model('LinearCLF.joblib')
         self.__classified_list = [[]]
         self.__cleaned_data_to_process = [[]]
 
+    def __build_clf(self):
+        p = Path(__file__).with_name('4763_oversampled.csv')
+        self.__clf.load_training(p)
+        self.__clf.test_split(0.2, 102)
+        self.__clf.create_pipeline(1e-5, 100000)
+        self.__clf.fit_classifier()
+        self.__clf.save("LinearCLF.joblib")
+
+    def __check_for_saved_model(self, file_name):
+        try:
+            p =  Path(__file__).with_name(file_name)
+            print("classifier was found")
+            self.__clf.load(p)
+        except Exception as err:
+            #file doesnt exist create a new classifier
+            print(f"Unexpected {err}")
+            self.__build_clf()
+        
     def Classify(self, dataframe):
         tempDF = dataframe
         predicted = self.__clf.predict(tempDF["Content"])
         tempDF["Labelled"] = predicted
-        return tempDF
-        
-
-    def Get_Classified(self):
-        return pd.DataFrame(self.__classified_list)
-    
-    def Get_Unprocessed_Data(self):
-        return pd.DataFrame(self.__cleaned_data_to_process)
-        
+        return tempDF 
