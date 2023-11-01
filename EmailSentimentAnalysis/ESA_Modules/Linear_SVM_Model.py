@@ -16,7 +16,7 @@ from sklearn.svm import LinearSVC
 
 from sklearn.pipeline import Pipeline
 from sklearn import metrics
-
+import os
 from joblib import dump
 
 parameters = {
@@ -113,7 +113,9 @@ class L_SVM:
         print("Gridsearch finished")
 
     def save(self, file_name):
-        dump(self.__grid_clf, file_name)
+        dirname = os.path.dirname(__file__)
+        path = os.path.join(dirname, file_name)
+        dump(self.__grid_clf, path)
         print(f"classified saved as: {file_name}")
         
     def load(self, file_name):

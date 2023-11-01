@@ -20,13 +20,13 @@ class Sentiment_Classifier:
         self.__clf.save("LinearCLF.joblib")
 
     def __check_for_saved_model(self, file_name):
-        p =  Path(__file__).with_name(file_name)
-        if p.is_file():
+        try:
+            p =  Path(__file__).with_name(file_name)
             print("classifier was found")
             self.__clf.load(p)
-        else:
+        except Exception as err:
             #file doesnt exist create a new classifier
-            print("Classifier not found, Rebuilding Classifier")
+            print(f"Unexpected {err}")
             self.__build_clf()
         
     def Classify(self, dataframe):

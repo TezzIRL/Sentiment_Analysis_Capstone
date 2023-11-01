@@ -636,7 +636,7 @@ def update_visualization(selected_option, selected_year, data_table):
             return network_data
         elif selected_option == "time-series":
             # Generate and return a Time Series visualization
-            time_series_data = generate_time_series(filtered_df_time_series)
+            time_series_data = generate_time_series(filtered_df)
             return time_series_data
         elif selected_option == "tree-map":
             # Generate and return a Tree Map visualization
@@ -699,7 +699,6 @@ def generate_wordcloud(content):
             "yaxis": {"showgrid": False, "showticklabels": False, "zeroline": False},
         },
     }
-
 
 def generate_network_graph(df):
     G = nx.DiGraph()
@@ -770,13 +769,12 @@ def generate_network_graph(df):
                     ))
     return fig
 
-
-
 def generate_time_series(df):
     # Sort the DataFrame by 'Date' to ensure it's in the right order for plotting
+    print(df.columns.tolist())
     cols=['Year', 'Month', 'Day']
     df['Date'] = df[cols].apply(lambda x: '-'.join(x.values.astype(str)), axis='columns')
-    df['Date'] = pd.to_datetime(df['Date'], format="%Y-%m-%d")
+    df['Date'] = np.array(pd.to_datetime(df['Date'], format="%Y-%m-%d"))
     df = df.sort_values(by="Date")
 
     # Create a new DataFrame for the smoothed curve
@@ -797,8 +795,8 @@ def generate_time_series(df):
     scores_smooth = spline(num_dates_smooth)
 
     # Convert numerical dates back to actual dates
-    smooth_dates = df["Date"].min() + pd.to_timedelta(
-        num_dates_smooth * (df["Date"].max() - df["Date"].min())
+    smooth_dates = df["Date"].min() + np.array(pd.to_timedelta(
+        num_dates_smooth * (df["Date"].max() - df["Date"].min()))
     )
 
     smooth_df["Date"] = smooth_dates
@@ -812,7 +810,6 @@ def generate_time_series(df):
     )
 
     return fig
-
 
 def generate_tree_map(df):
     # Create a Tree Map for the selected year
