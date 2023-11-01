@@ -13,7 +13,7 @@ import joblib
 
 class Sentiment_Classifier:
     def __init__(self):
-        self.__clf = joblib.load("Gridsearched Linear-SVM.joblib")
+        self.__clf = joblib.load('EmailSentimentAnalysis\Gridsearched Linear-SVM.joblib')
         self.__classified_list = [[]]
         self.__cleaned_data_to_process = [[]]
 

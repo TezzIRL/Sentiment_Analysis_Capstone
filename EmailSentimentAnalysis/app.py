@@ -595,6 +595,8 @@ def update_visualization(selected_option, selected_year, data_table):
         sentimentDF = pd.DataFrame(data_table["props"]["data"])
         # Make a copy
         sentiDF = sentimentDF
+
+
         # Create DF with a Value
         sentiDF["Value"] = np.select(
             [
@@ -604,18 +606,17 @@ def update_visualization(selected_option, selected_year, data_table):
             ],
             [1, 0, -1],
         )
-        # Create a DF with Grouped by Year, (SUM)Value
-        sumYearSentiment = sentiDF.groupby("Year")["Value"].sum().reset_index()
-       # sumYearSentiment.columns = ["Year", "Sentiment Value"]
+        
         
         filtered_df = sentiDF  # No filtering by year
-        filtered_df_time_series = sumYearSentiment  # # No filtering by year
-        
+        filtered_df_time_series = sentiDF[['Year', 'Month', 'Day', 'Value']]
+
         if selected_year != "All Years":
             filtered_df = sentiDF[sentiDF['Year'] == selected_year]
-            filtered_df_time_series = sumYearSentiment[sumYearSentiment["Year"] == selected_year]
+            filtered_df_time_series = filtered_df_time_series[filtered_df_time_series["Year"] == selected_year]
 
         df_wordCloud = filtered_df["Content"]
+        df_network = filtered_df[['From','To']]
 
         if selected_option == "word-cloud":
 
@@ -627,7 +628,7 @@ def update_visualization(selected_option, selected_year, data_table):
 
         elif selected_option == "network-graph":
             # Generate and return a Network Graph visualization
-            network_data = generate_network_graph(filtered_df)
+            network_data = generate_network_graph(df_network)
             return network_data
         elif selected_option == "time-series":
             # Generate and return a Time Series visualization
@@ -695,7 +696,7 @@ def generate_wordcloud(content):
         },
     }
 
-
+# works
 def generate_network_graph(df):
     G = nx.DiGraph()
     for index, row in df.iterrows():
@@ -772,46 +773,71 @@ def generate_time_series(df):
     cols=['Year', 'Month', 'Day']
     df['Date'] = df[cols].apply(lambda x: '-'.join(x.values.astype(str)), axis='columns')
     df['Date'] = pd.to_datetime(df['Date'], format="%Y-%m-%d")
-    df = df.sort_values(by="Date")
+    df_sum = df.groupby('Date')['Value'].sum().reset_index()
+    df_sum = df_sum.sort_values(by="Date")
 
     # Create a new DataFrame for the smoothed curve
     smooth_df = pd.DataFrame()
     num_dates = np.linspace(
-        0, 1, len(df)
+        0, 1, len(df_sum)
     )  # Create a linear space of numerical dates between 0 and 1
 
-    # Create a spline function
-    spline = make_interp_spline(num_dates, df["Value"], k=3)
+    if len(df) >= 3:
+    
+        # Create a spline function
+        spline = make_interp_spline(num_dates, df_sum["Value"], k=3)
 
-    # Generate the numerical dates for the smoothed curve
-    num_dates_smooth = np.linspace(
-        0, 1, 100
-    )  # Adjust the number of points (100 in this example)
+        # Generate the numerical dates for the smoothed curve
+        num_dates_smooth = np.linspace(
+            0, 1, 100
+        )  # Adjust the number of points (100 in this example)
 
-    # Get the smoothed scores for the numerical dates
-    scores_smooth = spline(num_dates_smooth)
+        # Get the smoothed scores for the numerical dates
+        scores_smooth = spline(num_dates_smooth)
 
-    # Convert numerical dates back to actual dates
-    smooth_dates = df["Date"].min() + pd.to_timedelta(
-        num_dates_smooth * (df["Date"].max() - df["Date"].min())
-    )
+        # Convert numerical dates back to actual dates
+        smooth_dates = df_sum["Date"].min() + pd.to_timedelta(
+            num_dates_smooth * (df_sum["Date"].max() - df_sum["Date"].min())
+        )
 
-    smooth_df["Date"] = smooth_dates
-    smooth_df["Value"] = scores_smooth
+        smooth_df["Date"] = smooth_dates
+        smooth_df["Value"] = scores_smooth
 
-    fig = px.scatter(df, x="Date", y="Value", title="Score by Date")
-
-    # Add the smoothed curve
-    fig.add_scatter(
-        x=smooth_df["Date"], y=smooth_df["Value"], mode="lines", name="Smoothed Curve"
-    )
+    fig = px.scatter(df_sum, x="Date", y="Value", title="Score by Date")
+    
+    if len(df) >= 3:
+        # Add the smoothed curve
+        fig.add_scatter(
+            x=smooth_df["Date"], y=smooth_df["Value"], mode="lines", name="Smoothed Curve"
+        )
 
     return fig
 
 
 def generate_tree_map(df):
+    company_list = []
+    for index, row in df.iterrows():
+        
+        recipients = row["To"].split(", ")  # get a list of recipients
+        
+        for recipient in recipients:
+            parts = recipient.split("@")    # split the email by @
+
+            #company_name = parts[1].split(".")[0]   # get the company name which is the string after @ before .
+
+            try:
+                company_name = parts[1].split(".")[0]
+            except IndexError:
+                company_name = ''
+
+
+            if company_name != 'enron':
+                company_list.append(company_name)   # add company name if it's not enron
+
+    df_companies = pd.DataFrame({'Company Name': company_list})   # make a dataframe for plotting
+
     # Create a Tree Map for the selected year
-    tree_map_fig = px.treemap(df, path=["Year", "Labelled"], color="Labelled")
+    tree_map_fig = px.treemap(df_companies, path=['Company Name'], color='Company Name')
     return tree_map_fig
 
 
