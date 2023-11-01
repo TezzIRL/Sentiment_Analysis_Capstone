@@ -826,7 +826,8 @@ def generate_tree_map(df):
     company_list = []
     for index, row in df.iterrows():
         
-        recipients = row["To"].split(", ")  # get a list of recipients
+        if row["To"] is not None:
+            recipients = row["To"].split(", ")  # get a list of recipients
         
         for recipient in recipients:
             parts = recipient.split("@")    # split the email by @
