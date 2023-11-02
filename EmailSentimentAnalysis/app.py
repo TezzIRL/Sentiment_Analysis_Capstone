@@ -677,8 +677,8 @@ def create_dropdown_senders(data_table):
         raise PreventUpdate
     else:
         df = pd.DataFrame(data_table["props"]["data"])
-        available_recipients = ["All Recipients"] + df["To"].unique().tolist()
-        return [{"label": i, "value": i} for i in available_recipients], "All Recipients"
+        available_recipients = ["All Recipients"] + ["N/A"] + df["To"].unique().tolist()
+        return [{"label": i, "value": i} for i in available_recipients if i is not None], "All Senders"
 
 # LOAD DAY
 @app.callback(
@@ -699,8 +699,8 @@ def create_dropdown_senders(data_table):
 # LOAD MONTH
 @app.callback(
     [
-        Output("dropdown-months", "options"),
-        Output("dropdown-months", "value"),
+        Output("dropdown-month", "options"),
+        Output("dropdown-month", "value"),
     ],
     Input("output-sentiment", "children"),
 )
@@ -715,8 +715,8 @@ def create_dropdown_senders(data_table):
 # LOAD YEAR
 @app.callback(
     [
-        Output("dropdown-years", "options"),
-        Output("dropdown-years", "value"),
+        Output("dropdown-year", "options"),
+        Output("dropdown-year", "value"),
     ],
     Input("output-sentiment", "children"),
 )
