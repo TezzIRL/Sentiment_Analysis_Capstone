@@ -287,30 +287,6 @@ app.layout = dbc.Tabs(
                             [
                                 dbc.Col(
                                     dcc.Dropdown(
-                                        id="dropdown-day",
-                                        options=[
-                                            {
-                                                "label": "Days",
-                                                "value": "all-days",
-                                            },
-                                        ],
-                                        value="all-days",
-                                    ),
-                                ),
-                                dbc.Col(
-                                    dcc.Dropdown(
-                                        id="dropdown-month",
-                                        options=[
-                                            {
-                                                "label": "Months",
-                                                "value": "all-months",
-                                            },
-                                        ],
-                                        value="all-months",
-                                    ),
-                                ),
-                                dbc.Col(
-                                    dcc.Dropdown(
                                         id="dropdown-year",
                                         options=[
                                             {
