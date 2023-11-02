@@ -839,10 +839,15 @@ def generate_tree_map(df):
             except IndexError:
                 company_name = ''
 
-
             if company_name != 'enron':
                 company_list.append(company_name)   # add company name if it's not enron
 
+    if len(company_list) == 0:
+        # Create a dummy figure with the message
+        fig = go.Figure(go.Scatter(x=[0], y=[0], text=["No contact company other than Enron"],
+                                  mode="text", textfont_size=24))
+        return fig
+    
     df_companies = pd.DataFrame({'Company Name': company_list})   # make a dataframe for plotting
 
     # Create a Tree Map for the selected year
