@@ -40,8 +40,6 @@ import plotly.graph_objs as go
 from pathlib import Path
 
 
-
-
 webbrowser.get().open("http://127.0.0.1:8050")
 
 # custom font
@@ -252,6 +250,121 @@ app.layout = dbc.Tabs(
             label="Visualization",
             children=[
                 html.Div(
+                    [
+                        dbc.Row(
+                            [
+                                dbc.Col(
+                                    dcc.Dropdown(
+                                        id="dropdown-from",
+                                        options=[
+                                            {
+                                                "label": "All Senders",
+                                                "value": "all-from",
+                                            },
+                                        ],
+                                        value="all-from",
+                                    )
+                                ),
+                            ],
+                        ),
+                        dbc.Row(
+                            [
+                                dbc.Col(
+                                    dcc.Dropdown(
+                                        id="dropdown-to",
+                                        options=[
+                                            {
+                                                "label": "All Recipients",
+                                                "value": "all-to",
+                                            },
+                                        ],
+                                        value="all-to",
+                                    )
+                                ),
+                            ],
+                        ),
+                        dbc.Row(
+                            [
+                                dbc.Col(
+                                    dcc.Dropdown(
+                                        id="dropdown-day",
+                                        options=[
+                                            {
+                                                "label": "Days",
+                                                "value": "all-days",
+                                            },
+                                        ],
+                                        value="all-days",
+                                    ),
+                                ),
+                                dbc.Col(
+                                    dcc.Dropdown(
+                                        id="dropdown-month",
+                                        options=[
+                                            {
+                                                "label": "Months",
+                                                "value": "all-months",
+                                            },
+                                        ],
+                                        value="all-months",
+                                    ),
+                                ),
+                                dbc.Col(
+                                    dcc.Dropdown(
+                                        id="dropdown-year",
+                                        options=[
+                                            {
+                                                "label": "Years",
+                                                "value": "all-years",
+                                            },
+                                        ],
+                                        value="all-years",
+                                    ),
+                                ),
+                            ],
+                            className="g-0",
+                        ),
+                        dbc.Row(
+                            [
+                                dbc.Col(
+                                    dcc.Graph(
+                                        id="vis-network-graph",
+                                    ),
+                                    width=6,
+                                ),
+                                dbc.Col(
+                                    dcc.Graph(
+                                        id="vis-tree-graph",
+                                    ),
+                                    width=6,
+                                ),
+                            ],
+                            className="g-0",
+                        ),
+                        dbc.Row(
+                            [
+                                dbc.Col(
+                                    dcc.Graph(
+                                        id="vis-line-graph",
+                                    ),
+                                    width=4,
+                                ),
+                                dbc.Col(
+                                    dcc.Graph(
+                                        id="vis-pie-graph",
+                                    ),
+                                    width=4,
+                                ),
+                                dbc.Col(
+                                    dcc.Graph(
+                                        id="vis-wordmap-graph",
+                                    ),
+                                    width=4,
+                                ),
+                            ],
+                            className="g-0",
+                        ),
+                    ],
                     id="visualisation-dashboard",
                     style={
                         "background-color": "#EFFBFB",
@@ -532,6 +645,92 @@ def cleaned_data_to_file(n_clicks, data_table):
 # Visualise Processed Emails
 ############################
 # CREATE
+
+
+# LOAD FILTERS
+# LOAD FROM
+@app.callback(
+    [
+        Output("dropdown-from", "options"),
+        Output("dropdown-from", "value"),
+    ],
+    Input("output-sentiment", "children"),
+)
+def create_dropdown_senders(data_table):
+    if data_table is None:
+        raise PreventUpdate
+    else:
+        df = pd.DataFrame(data_table["props"]["data"])
+        available_senders = ["All Senders"] + df["From"].unique().tolist()
+        return [{"label": i, "value": i} for i in available_senders], "All Senders"
+
+# LOAD TO
+@app.callback(
+    [
+        Output("dropdown-to", "options"),
+        Output("dropdown-to", "value"),
+    ],
+    Input("output-sentiment", "children"),
+)
+def create_dropdown_senders(data_table):
+    if data_table is None:
+        raise PreventUpdate
+    else:
+        df = pd.DataFrame(data_table["props"]["data"])
+        available_recipients = ["All Recipients"] + df["To"].unique().tolist()
+        return [{"label": i, "value": i} for i in available_recipients], "All Recipients"
+
+# LOAD DAY
+@app.callback(
+    [
+        Output("dropdown-day", "options"),
+        Output("dropdown-day", "value"),
+    ],
+    Input("output-sentiment", "children"),
+)
+def create_dropdown_senders(data_table):
+    if data_table is None:
+        raise PreventUpdate
+    else:
+        df = pd.DataFrame(data_table["props"]["data"])
+        available_days = ["Days"] + df["Day"].unique().tolist()
+        return [{"label": i, "value": i} for i in available_days], "Days"
+    
+# LOAD MONTH
+@app.callback(
+    [
+        Output("dropdown-months", "options"),
+        Output("dropdown-months", "value"),
+    ],
+    Input("output-sentiment", "children"),
+)
+def create_dropdown_senders(data_table):
+    if data_table is None:
+        raise PreventUpdate
+    else:
+        df = pd.DataFrame(data_table["props"]["data"])
+        available_months = ["Months"] + df["Month"].unique().tolist()
+        return [{"label": i, "value": i} for i in available_months], "Months"
+    
+# LOAD YEAR
+@app.callback(
+    [
+        Output("dropdown-years", "options"),
+        Output("dropdown-years", "value"),
+    ],
+    Input("output-sentiment", "children"),
+)
+def create_dropdown_senders(data_table):
+    if data_table is None:
+        raise PreventUpdate
+    else:
+        df = pd.DataFrame(data_table["props"]["data"])
+        available_years = ["Years"] + df["Year"].unique().tolist()
+        return [{"label": i, "value": i} for i in available_years], "Years"
+
+# LOAD VISUALISATIONS
+
+
 @app.callback(
     Output("visualisation-dashboard", "children"),
     Input("output-sentiment", "children"),
@@ -540,50 +739,51 @@ def create_visualisations(data_table):
     if data_table is None:
         raise PreventUpdate
     else:
+        raise PreventUpdate
         # Get Sentiment Data
         sentimentDF = pd.DataFrame(data_table["props"]["data"])
 
-        available_years = ["All Years"] + sentimentDF["Year"].unique().tolist()
+    #     available_years = ["All Years"] + sentimentDF["Year"].unique().tolist()
 
-        children = [
-            html.H1(
-                "Visualization",
-                style={"color": "#0080FF", "font-size": "36px"},
-            ),
-            dcc.Dropdown(
-                id="visualization-dropdown",
-                options=[
-                    {"label": "Word Cloud", "value": "word-cloud"},
-                    {"label": "Network Graph", "value": "network-graph"},
-                    {"label": "Time Series", "value": "time-series"},
-                    {"label": "Tree Map", "value": "tree-map"},
-                    {"label": "Pie Chart", "value": "pie-chart"},
-                ],
-                value="word-cloud",
-            ),
-            dbc.Row(
-                [
-                    dbc.Col(
-                        dcc.Dropdown(
-                            id="year-dropdown",
-                            options=[
-                                {"label": year, "value": year}
-                                for year in available_years
-                            ],
-                            value="All Years",  # Default to "All Years"
-                        )
-                    ),
-                ]
-            ),
-            dcc.Graph(
-                id="visualization-graph",
-                style={
-                    "width": "100%",
-                    "height": "700px",
-                },  # Adjust the height as needed
-            ),
-        ]
-    return children
+    #     children = [
+    #         html.H1(
+    #             "Visualization",
+    #             style={"color": "#0080FF", "font-size": "36px"},
+    #         ),
+    #         dcc.Dropdown(
+    #             id="visualization-dropdown",
+    #             options=[
+    #                 {"label": "Word Cloud", "value": "word-cloud"},
+    #                 {"label": "Network Graph", "value": "network-graph"},
+    #                 {"label": "Time Series", "value": "time-series"},
+    #                 {"label": "Tree Map", "value": "tree-map"},
+    #                 {"label": "Pie Chart", "value": "pie-chart"},
+    #             ],
+    #             value="word-cloud",
+    #         ),
+    #         dbc.Row(
+    #             [
+    #                 dbc.Col(
+    #                     dcc.Dropdown(
+    #                         id="year-dropdown",
+    #                         options=[
+    #                             {"label": year, "value": year}
+    #                             for year in available_years
+    #                         ],
+    #                         value="All Years",  # Default to "All Years"
+    #                     )
+    #                 ),
+    #             ]
+    #         ),
+    #         dcc.Graph(
+    #             id="visualization-graph",
+    #             style={
+    #                 "width": "100%",
+    #                 "height": "700px",
+    #             },  # Adjust the height as needed
+    #         ),
+    #     ]
+    # return children
 
 
 # UPDATE - PARTIALLY WORKING
@@ -601,7 +801,6 @@ def update_visualization(selected_option, selected_year, data_table):
         # Make a copy
         sentiDF = sentimentDF
 
-
         # Create DF with a Value
         sentiDF["Value"] = np.select(
             [
@@ -611,20 +810,20 @@ def update_visualization(selected_option, selected_year, data_table):
             ],
             [1, 0, -1],
         )
-        
-        
+
         filtered_df = sentiDF  # No filtering by year
-        filtered_df_time_series = sentiDF[['Year', 'Month', 'Day', 'Value']]
+        filtered_df_time_series = sentiDF[["Year", "Month", "Day", "Value"]]
 
         if selected_year != "All Years":
-            filtered_df = sentiDF[sentiDF['Year'] == selected_year]
-            filtered_df_time_series = filtered_df_time_series[filtered_df_time_series["Year"] == selected_year]
+            filtered_df = sentiDF[sentiDF["Year"] == selected_year]
+            filtered_df_time_series = filtered_df_time_series[
+                filtered_df_time_series["Year"] == selected_year
+            ]
 
         df_wordCloud = filtered_df["Content"]
-        df_network = filtered_df[['From','To']]
+        df_network = filtered_df[["From", "To"]]
 
         if selected_option == "word-cloud":
-
             all_text = " ".join(df_wordCloud)
 
             wordcloud_data = generate_wordcloud(all_text)
@@ -647,6 +846,7 @@ def update_visualization(selected_option, selected_year, data_table):
             # Generate and return a Pie Chart visualization
             pie_chart_data = generate_pie_chart(filtered_df)
             return pie_chart_data
+
 
 # WORKS
 def generate_wordcloud(content):
@@ -694,21 +894,22 @@ def generate_wordcloud(content):
                     "yanchor": "middle",
                 }
             ],
-            #"width": "auto",
-            #"height": "auto",
+            # "width": "auto",
+            # "height": "auto",
             "xaxis": {"showgrid": False, "showticklabels": False, "zeroline": False},
             "yaxis": {"showgrid": False, "showticklabels": False, "zeroline": False},
         },
     }
 
+
 def generate_network_graph(df):
     G = nx.DiGraph()
     for index, row in df.iterrows():
-        if (row["From"] is None):
-            row['From'] = 'N/A'
+        if row["From"] is None:
+            row["From"] = "N/A"
         sender = row["From"]
-        if (row['To'] is None):
-            row['To'] = 'N/A'
+        if row["To"] is None:
+            row["To"] = "N/A"
         recipients = row["To"].split(", ")
         G.add_node(sender)
         for recipient in recipients:
@@ -737,46 +938,52 @@ def generate_network_graph(df):
         node_y.append(y)
 
     edge_trace = go.Scatter(
-        x=edge_x, y=edge_y,
-        line=dict(width=0.5, color='#888'),
-        hoverinfo='none',
-        mode='lines')
+        x=edge_x,
+        y=edge_y,
+        line=dict(width=0.5, color="#888"),
+        hoverinfo="none",
+        mode="lines",
+    )
 
     node_trace = go.Scatter(
-        x=node_x, y=node_y,
-        mode='markers',
-        hoverinfo='text',
+        x=node_x,
+        y=node_y,
+        mode="markers",
+        hoverinfo="text",
         marker=dict(
             showscale=True,
-            colorscale='YlGnBu',
+            colorscale="YlGnBu",
             size=10,
             colorbar=dict(
                 thickness=15,
-                title='Node Connections',
-                xanchor='left',
-                titleside='right'
-            )
-        )
+                title="Node Connections",
+                xanchor="left",
+                titleside="right",
+            ),
+        ),
     )
 
     node_text = list(G.nodes())
     node_trace.text = node_text
 
-    fig = go.Figure(data=[edge_trace, node_trace],
-                    layout=go.Layout(
-                        showlegend=False,
-                        hovermode='closest',
-                        margin=dict(b=0, l=0, r=0, t=0)
-                    ))
+    fig = go.Figure(
+        data=[edge_trace, node_trace],
+        layout=go.Layout(
+            showlegend=False, hovermode="closest", margin=dict(b=0, l=0, r=0, t=0)
+        ),
+    )
     return fig
+
 
 def generate_time_series(df):
     # Sort the DataFrame by 'Date' to ensure it's in the right order for plotting
-    cols=['Year', 'Month', 'Day']
-    df['Date'] = df[cols].apply(lambda x: '-'.join(x.values.astype(str)), axis='columns')
-    
-    df['Date'] = pd.to_datetime(df['Date'], format="%Y-%m-%d")
-    df_sum = df.groupby('Date')['Value'].sum().reset_index()
+    cols = ["Year", "Month", "Day"]
+    df["Date"] = df[cols].apply(
+        lambda x: "-".join(x.values.astype(str)), axis="columns"
+    )
+
+    df["Date"] = pd.to_datetime(df["Date"], format="%Y-%m-%d")
+    df_sum = df.groupby("Date")["Value"].sum().reset_index()
     df_sum = df_sum.sort_values(by="Date")
 
     # Create a new DataFrame for the smoothed curve
@@ -786,7 +993,6 @@ def generate_time_series(df):
     )  # Create a linear space of numerical dates between 0 and 1
 
     if len(df) >= 3:
-    
         # Create a spline function
         spline = make_interp_spline(num_dates, df_sum["Value"], k=3)
 
@@ -804,49 +1010,52 @@ def generate_time_series(df):
         )
 
     # Convert numerical dates back to actual dates
-    smooth_dates = df["Date"].min() + np.array(pd.to_timedelta(
-        num_dates_smooth * (df["Date"].max() - df["Date"].min()))
+    smooth_dates = df["Date"].min() + np.array(
+        pd.to_timedelta(num_dates_smooth * (df["Date"].max() - df["Date"].min()))
     )
 
     smooth_df["Date"] = smooth_dates
     smooth_df["Value"] = scores_smooth
 
-
     fig = px.scatter(df_sum, x="Date", y="Value", title="Score by Date")
-    
+
     if len(df) >= 3:
         # Add the smoothed curve
         fig.add_scatter(
-            x=smooth_df["Date"], y=smooth_df["Value"], mode="lines", name="Smoothed Curve"
+            x=smooth_df["Date"],
+            y=smooth_df["Value"],
+            mode="lines",
+            name="Smoothed Curve",
         )
 
     return fig
 
+
 def generate_tree_map(df):
     company_list = []
     for index, row in df.iterrows():
-        
         if row["To"] is not None:
             recipients = row["To"].split(", ")  # get a list of recipients
-        
-        for recipient in recipients:
-            parts = recipient.split("@")    # split the email by @
 
-            #company_name = parts[1].split(".")[0]   # get the company name which is the string after @ before .
+        for recipient in recipients:
+            parts = recipient.split("@")  # split the email by @
+
+            # company_name = parts[1].split(".")[0]   # get the company name which is the string after @ before .
 
             try:
                 company_name = parts[1].split(".")[0]
             except IndexError:
-                company_name = ''
+                company_name = ""
 
+            if company_name != "enron":
+                company_list.append(company_name)  # add company name if it's not enron
 
-            if company_name != 'enron':
-                company_list.append(company_name)   # add company name if it's not enron
-
-    df_companies = pd.DataFrame({'Company Name': company_list})   # make a dataframe for plotting
+    df_companies = pd.DataFrame(
+        {"Company Name": company_list}
+    )  # make a dataframe for plotting
 
     # Create a Tree Map for the selected year
-    tree_map_fig = px.treemap(df_companies, path=['Company Name'], color='Company Name')
+    tree_map_fig = px.treemap(df_companies, path=["Company Name"], color="Company Name")
     return tree_map_fig
 
 
