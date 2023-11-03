@@ -1042,32 +1042,36 @@ def generate_time_series(df):
 
     return fig
 
-
 def generate_tree_map(df):
     company_list = []
     for index, row in df.iterrows():
+        
         if row["To"] is not None:
             recipients = row["To"].split(", ")  # get a list of recipients
-
+        
         for recipient in recipients:
-            parts = recipient.split("@")  # split the email by @
+            parts = recipient.split("@")    # split the email by @
 
-            # company_name = parts[1].split(".")[0]   # get the company name which is the string after @ before .
+            #company_name = parts[1].split(".")[0]   # get the company name which is the string after @ before .
 
             try:
                 company_name = parts[1].split(".")[0]
             except IndexError:
-                company_name = ""
+                company_name = ''
 
-            if company_name != "enron":
-                company_list.append(company_name)  # add company name if it's not enron
+            if company_name != 'enron':
+                company_list.append(company_name)   # add company name if it's not enron
 
-    df_companies = pd.DataFrame(
-        {"Company Name": company_list}
-    )  # make a dataframe for plotting
+    if len(company_list) == 0:
+        # Create a dummy figure with the message
+        fig = go.Figure(go.Scatter(x=[0], y=[0], text=["No contact company other than Enron"],
+                                  mode="text", textfont_size=24))
+        return fig
+    
+    df_companies = pd.DataFrame({'Company Name': company_list})   # make a dataframe for plotting
 
     # Create a Tree Map for the selected year
-    tree_map_fig = px.treemap(df_companies, path=["Company Name"], color="Company Name")
+    tree_map_fig = px.treemap(df_companies, path=['Company Name'], color='Company Name')
     return tree_map_fig
 
 
