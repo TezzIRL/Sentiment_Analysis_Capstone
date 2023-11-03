@@ -2,6 +2,7 @@
 # code example from @mcmanus_data_works: https://medium.com/@mcmanus_data_works/how-to-create-a-multipage-dash-app-261a8699ac3f
 
 
+from tkinter import CURRENT
 import webbrowser
 from dash.dash import PreventUpdate
 
@@ -24,6 +25,7 @@ from dash import (
 import base64
 import pandas as pd
 import plotly.express as px
+import wordcloud
 from ESA_Modules import Preprocessor
 from ESA_Modules import Sentiment_Classifier
 import datetime
@@ -198,9 +200,30 @@ app.layout = dbc.Tabs(
                             "Sentiment Classification",
                             style={"color": "#0080FF", "font-size": "36px"},
                         ),
+                        dcc.Upload(
+                            id="upload-sentiment-data",
+                            children=html.Div(
+                                ["Drag and Drop or ", html.A("Select File")]
+                            ),
+                            style={
+                                "width": "100%",
+                                "height": "60px",
+                                "lineHeight": "60px",
+                                "borderWidth": "1px",
+                                "borderStyle": "dashed",
+                                "borderRadius": "5px",
+                                "textAlign": "center",
+                                "margin": "10px",
+                            },
+                        ),
                         html.Button(
                             "Classify and Display",
                             id="btn-classify",
+                            style={"margin-right": "10px"},
+                        ),
+                        html.Button(
+                            "Clear",
+                            id="btn-classify-clear",
                         ),
                         html.Div(id="output-sentiment"),
                         # Add more content for this scenario
@@ -504,6 +527,49 @@ def load_preprocessed(list_of_contents, list_of_names, list_of_dates):
 
 
 ############################
+def load_classified_csv(contents, filename, date):
+    content_type, content_string = contents.split(",")
+
+    decoded = base64.b64decode(content_string)
+    try:
+        if "csv" in filename:
+            temp_df = pd.read_csv(io.StringIO(decoded.decode("utf-8")), index_col=False)
+        else:
+            raise Exception
+    except Exception as e:
+        print(e)
+        return html.Div(["There was an error processing this file."])
+    dash_table = populate_dash_table(temp_df)
+    return dash_table
+
+
+@app.callback(
+    Output("output-sentiment", "children", allow_duplicate=True),
+    Input("upload-sentiment-data", "contents"),
+    State("upload-sentiment-data", "filename"),
+    State("upload-sentiment-data", "last_modified"),
+    prevent_initial_call=True,
+)
+def load_classified(content, filename, date):
+    if content is not None:
+        child = load_classified_csv(content, filename, date)
+        return child
+
+
+@app.callback(
+    Output("output-sentiment", "children", allow_duplicate=True),
+    Input("btn-classify-clear", "n_clicks"),
+    State("output-sentiment", "children"),
+    prevent_initial_call=True,
+)
+def clear_raw_email_output(clicks, data_table):
+    if data_table is None:
+        raise PreventUpdate
+    else:
+        return None
+
+
+############################
 # Append Emails to Unclassified List - Remove Duplicates - Clear Upload Table
 ############################
 @app.callback(
@@ -640,6 +706,7 @@ def create_dropdown_senders(data_table):
         available_senders = ["All Senders"] + df["From"].unique().tolist()
         return [{"label": i, "value": i} for i in available_senders], "All Senders"
 
+
 # LOAD TO
 @app.callback(
     [
@@ -648,46 +715,17 @@ def create_dropdown_senders(data_table):
     ],
     Input("output-sentiment", "children"),
 )
-def create_dropdown_senders(data_table):
+def create_dropdown_recipients(data_table):
     if data_table is None:
         raise PreventUpdate
     else:
         df = pd.DataFrame(data_table["props"]["data"])
         available_recipients = ["All Recipients"] + ["N/A"] + df["To"].unique().tolist()
-        return [{"label": i, "value": i} for i in available_recipients if i is not None], "All Senders"
+        return [
+            {"label": i, "value": i} for i in available_recipients if i is not None
+        ], "All Recipients"
 
-# LOAD DAY
-@app.callback(
-    [
-        Output("dropdown-day", "options"),
-        Output("dropdown-day", "value"),
-    ],
-    Input("output-sentiment", "children"),
-)
-def create_dropdown_senders(data_table):
-    if data_table is None:
-        raise PreventUpdate
-    else:
-        df = pd.DataFrame(data_table["props"]["data"])
-        available_days = ["Days"] + df["Day"].unique().tolist()
-        return [{"label": i, "value": i} for i in available_days], "Days"
-    
-# LOAD MONTH
-@app.callback(
-    [
-        Output("dropdown-month", "options"),
-        Output("dropdown-month", "value"),
-    ],
-    Input("output-sentiment", "children"),
-)
-def create_dropdown_senders(data_table):
-    if data_table is None:
-        raise PreventUpdate
-    else:
-        df = pd.DataFrame(data_table["props"]["data"])
-        available_months = ["Months"] + df["Month"].unique().tolist()
-        return [{"label": i, "value": i} for i in available_months], "Months"
-    
+
 # LOAD YEAR
 @app.callback(
     [
@@ -696,133 +734,131 @@ def create_dropdown_senders(data_table):
     ],
     Input("output-sentiment", "children"),
 )
-def create_dropdown_senders(data_table):
+def create_dropdown_years(data_table):
     if data_table is None:
         raise PreventUpdate
     else:
+        print("is this getting called a lot")
         df = pd.DataFrame(data_table["props"]["data"])
         available_years = ["Years"] + df["Year"].unique().tolist()
         return [{"label": i, "value": i} for i in available_years], "Years"
 
-# LOAD VISUALISATIONS
-
-
-@app.callback(
-    Output("visualisation-dashboard", "children"),
-    Input("output-sentiment", "children"),
-)
-def create_visualisations(data_table):
-    if data_table is None:
-        raise PreventUpdate
-    else:
-        raise PreventUpdate
-        # Get Sentiment Data
-        sentimentDF = pd.DataFrame(data_table["props"]["data"])
-
-    #     available_years = ["All Years"] + sentimentDF["Year"].unique().tolist()
-
-    #     children = [
-    #         html.H1(
-    #             "Visualization",
-    #             style={"color": "#0080FF", "font-size": "36px"},
-    #         ),
-    #         dcc.Dropdown(
-    #             id="visualization-dropdown",
-    #             options=[
-    #                 {"label": "Word Cloud", "value": "word-cloud"},
-    #                 {"label": "Network Graph", "value": "network-graph"},
-    #                 {"label": "Time Series", "value": "time-series"},
-    #                 {"label": "Tree Map", "value": "tree-map"},
-    #                 {"label": "Pie Chart", "value": "pie-chart"},
-    #             ],
-    #             value="word-cloud",
-    #         ),
-    #         dbc.Row(
-    #             [
-    #                 dbc.Col(
-    #                     dcc.Dropdown(
-    #                         id="year-dropdown",
-    #                         options=[
-    #                             {"label": year, "value": year}
-    #                             for year in available_years
-    #                         ],
-    #                         value="All Years",  # Default to "All Years"
-    #                     )
-    #                 ),
-    #             ]
-    #         ),
-    #         dcc.Graph(
-    #             id="visualization-graph",
-    #             style={
-    #                 "width": "100%",
-    #                 "height": "700px",
-    #             },  # Adjust the height as needed
-    #         ),
-    #     ]
-    # return children
-
 
 # UPDATE - PARTIALLY WORKING
 @app.callback(
-    Output("visualization-graph", "figure"),
-    Input("visualization-dropdown", "value"),
-    Input("year-dropdown", "value"),
-    State("output-sentiment", "children"),
+    [
+        Output("dropdown-from", "options", allow_duplicate=True),
+        Output("dropdown-to", "options", allow_duplicate=True),
+        Output("dropdown-year", "options", allow_duplicate=True),
+        Output("vis-network-graph", "figure"),
+        Output("vis-tree-graph", "figure"),
+        Output("vis-line-graph", "figure"),
+        Output("vis-pie-graph", "figure"),
+        Output("vis-wordmap-graph", "figure"),
+    ],
+    [
+        Input("dropdown-from", "value"),
+        Input("dropdown-to", "value"),
+        Input("dropdown-year", "value"),
+        State("output-sentiment", "children"),
+    ],
+    prevent_initial_call=True,
 )
-def update_visualization(selected_option, selected_year, data_table):
+def update_dropdowns(option_from, option_to, option_year, data_table):
     if data_table is None:
         raise PreventUpdate
     else:
         sentimentDF = pd.DataFrame(data_table["props"]["data"])
-        # Make a copy
-        sentiDF = sentimentDF
+        senders_df = pd.DataFrame()
+        recipients_df = pd.DataFrame()
+        year_df = pd.DataFrame()
 
+        # Get Senders Filter
+        if option_from == "All Senders" or None:
+            senders_df = sentimentDF
+        else:
+            senders_df = sentimentDF[sentimentDF["From"] == option_from]
+
+        # Get Recipients
+        if option_to == "All Recipients" or None:
+            recipients_df = sentimentDF
+        else:
+            if option_to == "N/A":
+                recipients_df = sentimentDF[sentimentDF["To"].isna()]
+            else:
+                recipients_df = sentimentDF[sentimentDF["To"] == option_to]
+
+        # Get Years
+        if option_year == "Years" or None:
+            years_df = sentimentDF
+        else:
+            years_df = sentimentDF[sentimentDF["Year"] == option_year]
+
+        first_merge = pd.merge(senders_df, recipients_df, how="inner")
+        filter_df = pd.merge(first_merge, years_df, how="inner")
+
+        available_senders = ["All Senders"] + filter_df["From"].unique().tolist()
+        available_recipients = (
+            ["All Recipients"] + ["N/A"] + filter_df["From"].unique().tolist()
+        )
+        available_years = ["Years"] + filter_df["Year"].unique().tolist()
+
+        sender_options = [{"label": i, "value": i} for i in available_senders]
+        recipients_options = [
+            {"label": i, "value": i} for i in available_recipients if i is not None
+        ]
+        year_options = [{"label": i, "value": i} for i in available_years]
+
+        filter_df_with_values = filter_df
         # Create DF with a Value
-        sentiDF["Value"] = np.select(
+        filter_df_with_values["Value"] = np.select(
             [
-                sentiDF["Labelled"] == "Positive",
-                sentiDF["Labelled"] == "Neutral",
-                sentiDF["Labelled"] == "Negative",
+                filter_df_with_values["Labelled"] == "Positive",
+                filter_df_with_values["Labelled"] == "Neutral",
+                filter_df_with_values["Labelled"] == "Negative",
             ],
             [1, 0, -1],
         )
 
-        filtered_df = sentiDF  # No filtering by year
-        filtered_df_time_series = sentiDF[["Year", "Month", "Day", "Value"]]
+        filtered_df_time_series = filter_df_with_values[
+            ["Year", "Month", "Day", "Value"]
+        ]
 
-        if selected_year != "All Years":
-            filtered_df = sentiDF[sentiDF["Year"] == selected_year]
-            filtered_df_time_series = filtered_df_time_series[
-                filtered_df_time_series["Year"] == selected_year
-            ]
+        df_wordCloud = filter_df_with_values["Content"]
+        df_network = filter_df_with_values[["From", "To"]]
 
-        df_wordCloud = filtered_df["Content"]
-        df_network = filtered_df[["From", "To"]]
-
-        if selected_option == "word-cloud":
+        try:
+            
+            # WORD CLOUD DATA
             all_text = " ".join(df_wordCloud)
-
             wordcloud_data = generate_wordcloud(all_text)
 
-            return wordcloud_data
-
-        elif selected_option == "network-graph":
             # Generate and return a Network Graph visualization
             network_data = generate_network_graph(df_network)
-            return network_data
-        elif selected_option == "time-series":
-            # Generate and return a Time Series visualization
-            time_series_data = generate_time_series(filtered_df)
-            return time_series_data
-        elif selected_option == "tree-map":
-            # Generate and return a Tree Map visualization
-            tree_map_data = generate_tree_map(filtered_df)
-            return tree_map_data
-        elif selected_option == "pie-chart":
-            # Generate and return a Pie Chart visualization
-            pie_chart_data = generate_pie_chart(filtered_df)
-            return pie_chart_data
 
+            # Generate and return a Time Series visualization
+            time_series_data = generate_time_series(filter_df_with_values)
+
+            # Generate and return a Tree Map visualization
+            tree_map_data = generate_tree_map(filter_df_with_values)
+
+            # Generate and return a Pie Chart visualization
+            pie_chart_data = generate_pie_chart(filter_df_with_values)
+            
+        except:
+            print("Error Drawing Visuals, Please Clear Filter")
+            raise PreventUpdate
+
+        return (
+            sender_options,
+            recipients_options,
+            year_options,
+            network_data,
+            tree_map_data,
+            time_series_data,
+            pie_chart_data,
+            wordcloud_data,
+        )
 
 # WORKS
 def generate_wordcloud(content):
