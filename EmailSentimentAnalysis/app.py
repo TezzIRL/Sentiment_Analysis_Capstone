@@ -799,7 +799,7 @@ def update_dropdowns(option_from, option_to, option_year, data_table):
 
         available_senders = ["All Senders"] + filter_df["From"].unique().tolist()
         available_recipients = (
-            ["All Recipients"] + ["N/A"] + filter_df["From"].unique().tolist()
+            ["All Recipients"] + ["N/A"] + filter_df["To"].unique().tolist()
         )
         available_years = ["Years"] + filter_df["Year"].unique().tolist()
 
