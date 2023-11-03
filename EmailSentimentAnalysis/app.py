@@ -875,7 +875,7 @@ def generate_wordcloud(content):
     plt.imshow(wordcloud, interpolation="bilinear")
     plt.axis("off")
     plt.tight_layout(pad=0)
-    plt.title("Word Cloud")
+    plt.title("Word Cloud for email content")
     plt.savefig(buffer, format="png")
     buffer.seek(0)
 
@@ -890,6 +890,15 @@ def generate_wordcloud(content):
                 "mode": "text",
                 "text": ["Word Cloud"],
                 "textfont": {"size": 24, "color": "black"},  # Customize text color
+            },
+            {
+                "x": [0.1],  # Adjust the x-coordinate to center the title
+                "y": [4],  # Adjust the y-coordinate to position the title above the image
+                "mode": "text",
+                "text": ["Word Cloud for email content"],
+                "textfont": {"size": 16, "color": "black"},
+                "showarrow": False,  # Remove the arrow pointing to the title
+                "visible": False  # Hide this trace
             }
         ],
         "layout": {
@@ -900,8 +909,8 @@ def generate_wordcloud(content):
                     "y": 0,
                     "xref": "x",
                     "yref": "y",
-                    "sizex": 1,
-                    "sizey": 1,
+                    "sizex": 2,
+                    "sizey": 2,
                     "xanchor": "center",
                     "yanchor": "middle",
                 }
@@ -984,6 +993,8 @@ def generate_network_graph(df):
             showlegend=False, hovermode="closest", margin=dict(b=0, l=0, r=0, t=0)
         ),
     )
+    fig.update_layout(title="Contact network") # Set your desired title here
+
     return fig
 
 
@@ -1029,7 +1040,7 @@ def generate_time_series(df):
     smooth_df["Date"] = smooth_dates
     smooth_df["Value"] = scores_smooth
 
-    fig = px.scatter(df_sum, x="Date", y="Value", title="Score by Date")
+    fig = px.scatter(df_sum, x="Date", y="Value", title="Sentiment score(sum) by Date")
 
     if len(df) >= 3:
         # Add the smoothed curve
@@ -1072,6 +1083,11 @@ def generate_tree_map(df):
 
     # Create a Tree Map for the selected year
     tree_map_fig = px.treemap(df_companies, path=['Company Name'], color='Company Name')
+    tree_map_fig.update_layout(
+    title="Company contacts",  # Set your desired title here
+    title_x=0.5,  # Set the x-position of the title on the graph (0.5 is center)
+    title_font_size=24  # Set the font size for the title
+    )
     return tree_map_fig
 
 
@@ -1090,7 +1106,7 @@ def generate_pie_chart(data_frame):
                 "values": values,
             }
         ],
-        "layout": {"title": "Distribution of Labels"},
+        "layout": {"title": "Distribution of sentiment Labels"},
     }
     return pie_chart_data
 
