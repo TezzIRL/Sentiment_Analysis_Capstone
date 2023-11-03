@@ -92,7 +92,7 @@ app.layout = dbc.Tabs(
                         html.Div(
                             [
                                 html.Button(
-                                    "Add to the My email List",
+                                    "Add to the Unclassified email List",
                                     id="btn-add-to-unclassified-table",
                                     style={"margin-right": "10px"},
                                 ),
@@ -146,7 +146,7 @@ app.layout = dbc.Tabs(
                         html.Div(
                             [
                                 html.Button(
-                                    "Add to the My email List",
+                                    "Add to the Unclassified emal List",
                                     id="btn-csv-to-unclassified",
                                     style={"margin-right": "10px"},
                                 ),
@@ -173,12 +173,12 @@ app.layout = dbc.Tabs(
             ],
         ),
         dbc.Tab(
-            label="My email list",
+            label="Unclassified emails",
             children=[
                 html.Div(
                     [
                         html.H1(
-                            "My email list",
+                            "Unclassified emails",
                             style={"color": "#0080FF", "font-size": "36px"},
                         ),
                         html.Div(id="table-unclassified-email"),
@@ -890,7 +890,7 @@ def generate_wordcloud(content):
                 "y": [0],
                 "mode": "text",
                 "text": ["Word Cloud"],
-                "textfont": {"size": 24, "color": "black"}  # Customize text color
+                "textfont": {"size": 12, "color": "black"}  # Customize text color
             }
         ],
         "layout": {
