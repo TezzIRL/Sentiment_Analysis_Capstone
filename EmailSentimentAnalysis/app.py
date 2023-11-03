@@ -1011,14 +1011,15 @@ def generate_time_series(df):
     df["Date"] = pd.to_datetime(df["Date"], format="%Y-%m-%d")
     df_sum = df.groupby("Date")["Value"].sum().reset_index()
     df_sum = df_sum.sort_values(by="Date")
+    
+    fig = px.scatter(df_sum, x="Date", y="Value", title="Sentiment score(sum) by Date")
 
-    # Create a new DataFrame for the smoothed curve
-    smooth_df = pd.DataFrame()
-    num_dates = np.linspace(
+    if len(df) > 3:
+        # Create a new DataFrame for the smoothed curve
+        smooth_df = pd.DataFrame()
+        num_dates = np.linspace(
         0, 1, len(df_sum)
-    )  # Create a linear space of numerical dates between 0 and 1
-
-    if len(df) >= 3:
+        )  # Create a linear space of numerical dates between 0 and 1
         # Create a spline function
         spline = make_interp_spline(num_dates, df_sum["Value"], k=3)
 
@@ -1035,18 +1036,14 @@ def generate_time_series(df):
             num_dates_smooth * (df_sum["Date"].max() - df_sum["Date"].min())
         )
 
-    # Convert numerical dates back to actual dates
-    smooth_dates = df["Date"].min() + np.array(
+        # Convert numerical dates back to actual dates
+        smooth_dates = df["Date"].min() + np.array(
         pd.to_timedelta(num_dates_smooth * (df["Date"].max() - df["Date"].min()))
-    )
+        )
 
-    smooth_df["Date"] = smooth_dates
-    smooth_df["Value"] = scores_smooth
+        smooth_df["Date"] = smooth_dates
+        smooth_df["Value"] = scores_smooth
 
-    fig = px.scatter(df_sum, x="Date", y="Value", title="Sentiment score(sum) by Date")
-
-    if len(df) >= 3:
-        # Add the smoothed curve
         fig.add_scatter(
             x=smooth_df["Date"],
             y=smooth_df["Value"],
