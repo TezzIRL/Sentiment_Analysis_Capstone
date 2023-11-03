@@ -61,26 +61,7 @@ app = dash.Dash(
 # Define CSS styles to enhance the appearance
 app.layout = dbc.Tabs(
     [
-        dbc.Tab(
-            label="Unclassified Emails",
-            children=[
-                html.Div(
-                    [
-                        html.H1(
-                            "Unclassified Emails",
-                            style={"color": "#0080FF", "font-size": "36px"},
-                        ),
-                        html.Div(id="table-unclassified-email"),
-                    ],
-                    className="tab-content",
-                    style={
-                        "background-color": "#EFFBFB",
-                        "padding": "20px",
-                        "border-radius": "10px",
-                    },
-                ),
-            ],
-        ),
+
         dbc.Tab(
             label="Load Raw Emails",
             children=[
@@ -111,7 +92,7 @@ app.layout = dbc.Tabs(
                         html.Div(
                             [
                                 html.Button(
-                                    "Add to the Unclassified List",
+                                    "Add to the My email List",
                                     id="btn-add-to-unclassified-table",
                                     style={"margin-right": "10px"},
                                 ),
@@ -165,7 +146,7 @@ app.layout = dbc.Tabs(
                         html.Div(
                             [
                                 html.Button(
-                                    "Add to the Unclassified List",
+                                    "Add to the My email List",
                                     id="btn-csv-to-unclassified",
                                     style={"margin-right": "10px"},
                                 ),
@@ -181,6 +162,26 @@ app.layout = dbc.Tabs(
                             },
                         ),
                         html.Div(id="output-preprocessed-data"),
+                    ],
+                    className="tab-content",
+                    style={
+                        "background-color": "#EFFBFB",
+                        "padding": "20px",
+                        "border-radius": "10px",
+                    },
+                ),
+            ],
+        ),
+        dbc.Tab(
+            label="My email list",
+            children=[
+                html.Div(
+                    [
+                        html.H1(
+                            "My email list",
+                            style={"color": "#0080FF", "font-size": "36px"},
+                        ),
+                        html.Div(id="table-unclassified-email"),
                     ],
                     className="tab-content",
                     style={
@@ -889,16 +890,7 @@ def generate_wordcloud(content):
                 "y": [0],
                 "mode": "text",
                 "text": ["Word Cloud"],
-                "textfont": {"size": 24, "color": "black"},  # Customize text color
-            },
-            {
-                "x": [0.1],  # Adjust the x-coordinate to center the title
-                "y": [4],  # Adjust the y-coordinate to position the title above the image
-                "mode": "text",
-                "text": ["Word Cloud for email content"],
-                "textfont": {"size": 16, "color": "black"},
-                "showarrow": False,  # Remove the arrow pointing to the title
-                "visible": False  # Hide this trace
+                "textfont": {"size": 24, "color": "black"}  # Customize text color
             }
         ],
         "layout": {
