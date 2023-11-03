@@ -886,23 +886,32 @@ def generate_wordcloud(content):
     return {
         "data": [
             {
-                "x": [0],
-                "y": [0],
+                "x": [0.5],
+                "y": [0.6],
                 "mode": "text",
                 "text": ["Word Cloud"],
-                "textfont": {"size": 12, "color": "black"}  # Customize text color
+                "textfont": {"size": 20, "color": "black"},  # Customize text color
+                "showlegend": False
+            },
+            {
+                "x": [0.5],  # Center the title horizontally
+                "y": [0.95],  # Position the title above the image
+                "mode": "text",
+                "text": ["Email content"],
+                "textfont": {"size": 12, "color": "black"},  # Customize title text color and size
+                "showlegend": False
             }
         ],
         "layout": {
             "images": [
                 {
                     "source": "data:image/png;base64,{}".format(wordcloud_base64),
-                    "x": 0,
-                    "y": 0,
-                    "xref": "x",
-                    "yref": "y",
-                    "sizex": 2,
-                    "sizey": 2,
+                    "x": 0.4,
+                    "y": 0.4,
+                    "xref": "paper",
+                    "yref": "paper",
+                    "sizex": 1,
+                    "sizey": 1,
                     "xanchor": "center",
                     "yanchor": "middle",
                 }
@@ -911,7 +920,9 @@ def generate_wordcloud(content):
             # "height": "auto",
             "xaxis": {"showgrid": False, "showticklabels": False, "zeroline": False},
             "yaxis": {"showgrid": False, "showticklabels": False, "zeroline": False},
+            
         },
+        
     }
 
 
@@ -982,10 +993,10 @@ def generate_network_graph(df):
     fig = go.Figure(
         data=[edge_trace, node_trace],
         layout=go.Layout(
-            showlegend=False, hovermode="closest", margin=dict(b=0, l=0, r=0, t=0)
+            showlegend=False, hovermode="closest", margin=dict(b=0, l=0, r=0, t=50),
+            title='Contact network'
         ),
     )
-    fig.update_layout(title="Contact network") # Set your desired title here
 
     return fig
 
@@ -1074,12 +1085,8 @@ def generate_tree_map(df):
     df_companies = pd.DataFrame({'Company Name': company_list})   # make a dataframe for plotting
 
     # Create a Tree Map for the selected year
-    tree_map_fig = px.treemap(df_companies, path=['Company Name'], color='Company Name')
-    tree_map_fig.update_layout(
-    title="Company contacts",  # Set your desired title here
-    title_x=0.5,  # Set the x-position of the title on the graph (0.5 is center)
-    title_font_size=24  # Set the font size for the title
-    )
+    tree_map_fig = px.treemap(df_companies, path=['Company Name'], color='Company Name', title='Company contacts')
+
     return tree_map_fig
 
 
