@@ -3,6 +3,7 @@
 
 
 from tkinter import CURRENT
+from turtle import clear
 import webbrowser
 from dash.dash import PreventUpdate
 
@@ -287,6 +288,7 @@ app.layout = dbc.Tabs(
                                             },
                                         ],
                                         value="all-from",
+                                        clearable=False,
                                     )
                                 ),
                             ],
@@ -303,6 +305,7 @@ app.layout = dbc.Tabs(
                                             },
                                         ],
                                         value="all-to",
+                                        clearable=False,
                                     )
                                 ),
                             ],
@@ -319,6 +322,7 @@ app.layout = dbc.Tabs(
                                             },
                                         ],
                                         value="all-years",
+                                        clearable=False,
                                     ),
                                 ),
                             ],
@@ -455,9 +459,9 @@ def add_cleaned_emails_to_unclassified_table(
     clicks, raw_email_data_table, unclassified_table
 ):
     # if there isnt any uploaded emails don't update
-    if raw_email_data_table is None:
-        raise PreventUpdate
-    else:
+    if raw_email_data_table is not None:
+    #     raise PreventUpdate
+    # else:
         tempRawDF = pd.DataFrame(raw_email_data_table["props"]["data"])
         # check if the unclassified table has been generated yet
         if unclassified_table is not None:
@@ -486,9 +490,9 @@ def add_cleaned_emails_to_unclassified_table(
     prevent_initial_call=True,
 )
 def clear_raw_email_output(clicks, data_table):
-    if data_table is None:
-        raise PreventUpdate
-    else:
+    if data_table is not None:
+    #     raise PreventUpdate
+    # else:
         return None
 
 
@@ -523,8 +527,8 @@ def load_preprocessed(list_of_contents, list_of_names, list_of_dates):
             load_preprocessed_csv(list_of_contents, list_of_names, list_of_dates)
         ]
         return children
-    else:
-        raise PreventUpdate
+    # else:
+    #     raise PreventUpdate
 
 
 ############################
@@ -564,9 +568,9 @@ def load_classified(content, filename, date):
     prevent_initial_call=True,
 )
 def clear_raw_email_output(clicks, data_table):
-    if data_table is None:
-        raise PreventUpdate
-    else:
+    if data_table is not None:
+    #     raise PreventUpdate
+    # else:
         return None
 
 
@@ -587,9 +591,9 @@ def clear_raw_email_output(clicks, data_table):
 )
 def add_csv_to_unclassified_table(clicks, preprocessed_table, unclassified_table):
     # if there isnt any uploaded emails don't update
-    if preprocessed_table is None:
-        raise PreventUpdate
-    else:
+    if preprocessed_table is not None:
+    #     raise PreventUpdate
+    # else:
         # imported csv converted to dataframe converted to dash_table is wrapped in list - no solution right now, access first item in list first
         preprocessed_table = preprocessed_table[0]
         tempRawDF = pd.DataFrame(preprocessed_table["props"]["data"])
@@ -621,9 +625,9 @@ def add_csv_to_unclassified_table(clicks, preprocessed_table, unclassified_table
     prevent_initial_call=True,
 )
 def clear_csv_output(clicks, data_table):
-    if data_table is None:
-        raise PreventUpdate
-    else:
+    if data_table is not None:
+    #     raise PreventUpdate
+    # else:
         return None
 
 
@@ -637,9 +641,9 @@ def clear_csv_output(clicks, data_table):
     prevent_initial_call=True,
 )
 def display_classified(mouse_clicks, data_table):
-    if data_table is None:
-        raise PreventUpdate
-    else:
+    if data_table is not None:
+    #     raise PreventUpdate
+    # else:
         tempDF = pd.DataFrame(data_table["props"]["data"])
         classifier = Sentiment_Classifier()
         classified_dataframe = classifier.Classify(tempDF)
@@ -659,9 +663,9 @@ def display_classified(mouse_clicks, data_table):
 )
 def cleaned_data_to_file(n_clicks, data_table):
     # if data_table is none, prevent return
-    if data_table is None:
-        raise PreventUpdate
-    else:
+    if data_table is not None:
+    #     raise PreventUpdate
+    # else:
         # convert data table into a data frame so that it can be converted to a csv file
         tempDF = pd.DataFrame(data_table["props"]["data"])
         return dcc.send_data_frame(tempDF.to_csv, "cleaned_emails.csv", index=False)
@@ -677,9 +681,9 @@ def cleaned_data_to_file(n_clicks, data_table):
     prevent_initial_call=True,
 )
 def cleaned_data_to_file(n_clicks, data_table):
-    if data_table is None:
-        raise PreventUpdate
-    else:
+    if data_table is not None:
+    #     raise PreventUpdate
+    # else:
         tempDF = pd.DataFrame(data_table["props"]["data"])
         return dcc.send_data_frame(tempDF.to_csv, "sentiment_classified_emails.csv")
 
@@ -700,9 +704,9 @@ def cleaned_data_to_file(n_clicks, data_table):
     Input("output-sentiment", "children"),
 )
 def create_dropdown_senders(data_table):
-    if data_table is None:
-        raise PreventUpdate
-    else:
+    if data_table is not None:
+    #     raise PreventUpdate
+    # else:
         df = pd.DataFrame(data_table["props"]["data"])
         available_senders = ["All Senders"] + df["From"].unique().tolist()
         return [{"label": i, "value": i} for i in available_senders], "All Senders"
@@ -717,9 +721,9 @@ def create_dropdown_senders(data_table):
     Input("output-sentiment", "children"),
 )
 def create_dropdown_recipients(data_table):
-    if data_table is None:
-        raise PreventUpdate
-    else:
+    if data_table is not None:
+    #     raise PreventUpdate
+    # else:
         df = pd.DataFrame(data_table["props"]["data"])
         available_recipients = ["All Recipients"] + ["N/A"] + df["To"].unique().tolist()
         return [
@@ -736,9 +740,9 @@ def create_dropdown_recipients(data_table):
     Input("output-sentiment", "children"),
 )
 def create_dropdown_years(data_table):
-    if data_table is None:
-        raise PreventUpdate
-    else:
+    if data_table is not None:
+    #     raise PreventUpdate
+    # else:
         print("is this getting called a lot")
         df = pd.DataFrame(data_table["props"]["data"])
         available_years = ["Years"] + df["Year"].unique().tolist()
@@ -766,9 +770,9 @@ def create_dropdown_years(data_table):
     prevent_initial_call=True,
 )
 def update_dropdowns(option_from, option_to, option_year, data_table):
-    if data_table is None:
-        raise PreventUpdate
-    else:
+    if data_table is not None:
+    #     raise PreventUpdate
+    # else:
         sentimentDF = pd.DataFrame(data_table["props"]["data"])
         senders_df = pd.DataFrame()
         recipients_df = pd.DataFrame()
@@ -848,7 +852,7 @@ def update_dropdowns(option_from, option_to, option_year, data_table):
             
         except:
             print("Error Drawing Visuals, Please Clear Filter")
-            raise PreventUpdate
+            #raise PreventUpdate
 
         return (
             sender_options,
@@ -1114,4 +1118,4 @@ def generate_pie_chart(data_frame):
 server = app.server
 
 if __name__ == "__main__":
-    app.run_server(debug=True)
+    app.run_server(debug=False)
