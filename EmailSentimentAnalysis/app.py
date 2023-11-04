@@ -890,7 +890,7 @@ def generate_wordcloud(content):
                 "y": [0.6],
                 "mode": "text",
                 "text": ["Word Cloud"],
-                "textfont": {"size": 20, "color": "black"},  # Customize text color
+                "textfont": {"size": 1, "color": "black"},  # Customize text color
                 "showlegend": False
             },
             {
@@ -898,7 +898,7 @@ def generate_wordcloud(content):
                 "y": [0.95],  # Position the title above the image
                 "mode": "text",
                 "text": ["Email content"],
-                "textfont": {"size": 12, "color": "black"},  # Customize title text color and size
+                "textfont": {"size": 18, "color": "black"},  # Customize title text color and size
                 "showlegend": False
             }
         ],
@@ -1077,6 +1077,7 @@ def generate_tree_map(df):
         # Create a dummy figure with the message
         fig = go.Figure(go.Scatter(x=[0], y=[0], text=["No contact company other than Enron"],
                                   mode="text", textfont_size=24))
+        fig.update_layout(title_text="Company contacts")
         return fig
     
     df_companies = pd.DataFrame({'Company Name': company_list})   # make a dataframe for plotting
